@@ -719,6 +719,94 @@ const chapter6QuizItems = [
   }
 ];
 
+const chapter7Concepts = [
+  {
+    title: "Closed chains",
+    text: "Links form one or more loops, so joint variables and platform pose must satisfy loop-closure constraints."
+  },
+  {
+    title: "Parallel mechanism",
+    text: "Multiple limbs connect a base to a moving platform, often giving high stiffness and precision."
+  },
+  {
+    title: "Inverse kinematics",
+    text: "For many parallel robots, inverse kinematics is direct: platform pose determines each limb length or joint value."
+  },
+  {
+    title: "Forward kinematics",
+    text: "Forward kinematics can be harder: actuator lengths may correspond to several possible platform poses."
+  },
+  {
+    title: "Differential kinematics",
+    text: "Differentiated loop constraints relate actuator rates and platform twist."
+  },
+  {
+    title: "Constraint Jacobians",
+    text: "Closed-chain velocity equations often appear as matrices multiplying actuator rates and platform velocities."
+  },
+  {
+    title: "Singularities",
+    text: "Closed chains have several singularity types, including loss of controllable motion and gain of uncontrolled motion."
+  },
+  {
+    title: "Chapter 7 bridge",
+    text: "The chapter prepares for dynamics by making constraint forces and passive joints explicit."
+  }
+];
+
+const chapter7QuizItems = [
+  {
+    q: "What makes a mechanism closed-chain?",
+    answers: [
+      "Its links form one or more kinematic loops.",
+      "It has no sensors.",
+      "Its joints must all be prismatic."
+    ],
+    correct: 0,
+    note: "Yes. Loop closure is the defining feature."
+  },
+  {
+    q: "Why can parallel robot inverse kinematics be easier than forward kinematics?",
+    answers: [
+      "A platform pose can directly determine each limb length, while lengths may imply multiple poses.",
+      "Parallel robots ignore geometry.",
+      "Forward kinematics is never defined."
+    ],
+    correct: 0,
+    note: "Right. This flips the intuition from many serial arms."
+  },
+  {
+    q: "What does differential closed-chain kinematics relate?",
+    answers: [
+      "Actuator rates and platform velocity through differentiated constraints.",
+      "Only link masses and inertias.",
+      "Only task-space obstacles."
+    ],
+    correct: 0,
+    note: "Exactly. Differentiate the loop equations and you get velocity constraints."
+  },
+  {
+    q: "What is a constraint singularity?",
+    answers: [
+      "A loss of constraint rank that may allow platform motion even with locked actuators.",
+      "A missing URDF tag.",
+      "A configuration where all links vanish."
+    ],
+    correct: 0,
+    note: "Good. Closed chains can gain unwanted motion at certain singularities."
+  },
+  {
+    q: "What is the Stewart-Gough platform?",
+    answers: [
+      "A spatial parallel platform with six extensible legs.",
+      "A planar serial 2R arm.",
+      "A mobile robot wheel model."
+    ],
+    correct: 0,
+    note: "Yes. It is the classic six-degree spatial parallel mechanism."
+  }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -820,6 +908,22 @@ const numIkTheta2Label = document.querySelector("#numIkTheta2Label");
 const numIkIterationsLabel = document.querySelector("#numIkIterationsLabel");
 const numericIkReadout = document.querySelector("#numericIkReadout");
 const numericIkCanvas = document.querySelector("#numericIkCanvas");
+const closedX = document.querySelector("#closedX");
+const closedY = document.querySelector("#closedY");
+const closedPhi = document.querySelector("#closedPhi");
+const closedXLabel = document.querySelector("#closedXLabel");
+const closedYLabel = document.querySelector("#closedYLabel");
+const closedPhiLabel = document.querySelector("#closedPhiLabel");
+const closedReadout = document.querySelector("#closedReadout");
+const closedCanvas = document.querySelector("#closedCanvas");
+const closedVx = document.querySelector("#closedVx");
+const closedVy = document.querySelector("#closedVy");
+const closedOmega = document.querySelector("#closedOmega");
+const closedVxLabel = document.querySelector("#closedVxLabel");
+const closedVyLabel = document.querySelector("#closedVyLabel");
+const closedOmegaLabel = document.querySelector("#closedOmegaLabel");
+const closedVelocityReadout = document.querySelector("#closedVelocityReadout");
+const closedVelocityCanvas = document.querySelector("#closedVelocityCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -2110,6 +2214,146 @@ function drawNumericIkLab() {
   ctx.fillText("iteration trail", 28, 34);
 }
 
+function renderChapter7Concepts() {
+  const el = document.querySelector("#chapter7Concepts");
+  el.innerHTML = chapter7Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function closedChainState() {
+  const x = Number(closedX.value);
+  const y = Number(closedY.value);
+  const phi = degToRad(Number(closedPhi.value));
+  const base = [
+    { x: -170, y: -92 },
+    { x: 170, y: -92 },
+    { x: 0, y: 156 }
+  ];
+  const local = [
+    { x: -58, y: -42 },
+    { x: 58, y: -42 },
+    { x: 0, y: 68 }
+  ];
+  const c = Math.cos(phi);
+  const s = Math.sin(phi);
+  const platform = local.map((p) => ({
+    x: x + c * p.x - s * p.y,
+    y: y + s * p.x + c * p.y,
+    local: p
+  }));
+  const legs = platform.map((p, i) => {
+    const dx = p.x - base[i].x;
+    const dy = p.y - base[i].y;
+    const length = Math.hypot(dx, dy);
+    return { base: base[i], platform: p, dx, dy, length, ux: dx / length, uy: dy / length };
+  });
+  return { x, y, phi, base, local, platform, legs };
+}
+
+function drawClosedPlatform(ctx, w, h, state, options = {}) {
+  const origin = { x: w / 2, y: h / 2 + 20 };
+  function map(p) {
+    return { x: origin.x + p.x, y: origin.y - p.y };
+  }
+  ctx.lineCap = "round";
+  state.legs.forEach((leg, i) => {
+    const a = map(leg.base);
+    const b = map(leg.platform);
+    ctx.strokeStyle = options.rates ? ["#2364aa", "#2a8c6d", "#d39b25"][i] : "#2364aa";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#16202a";
+    ctx.lineWidth = 3;
+    [a, b].forEach((p) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+  });
+  const pts = state.platform.map(map);
+  ctx.fillStyle = "rgba(42, 140, 109, 0.15)";
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  const center = map({ x: state.x, y: state.y });
+  drawFrame2d(ctx, center.x, center.y, state.phi, "{p}", 44);
+  return { origin, map };
+}
+
+function drawClosedChainLab() {
+  const state = closedChainState();
+  closedXLabel.textContent = String(state.x);
+  closedYLabel.textContent = String(state.y);
+  closedPhiLabel.textContent = `${Math.round((state.phi * 180) / Math.PI)} deg`;
+  closedReadout.innerHTML = `<strong>Inverse kinematics: leg lengths</strong>
+    <p>rho = (${state.legs.map((leg) => fmt(leg.length)).join(", ")}).</p>
+    <p>Each length is the distance from a fixed base anchor to a moving platform anchor.</p>`;
+  const { ctx, w, h } = setupCanvas(closedCanvas);
+  grid(ctx, w, h);
+  drawClosedPlatform(ctx, w, h, state);
+}
+
+function closedVelocityState() {
+  const state = closedChainState();
+  const vx = Number(closedVx.value) / 100;
+  const vy = Number(closedVy.value) / 100;
+  const omega = Number(closedOmega.value) / 100;
+  const rates = state.legs.map((leg) => {
+    const r = leg.platform.local;
+    const anchorVelocity = {
+      x: vx - omega * r.y,
+      y: vy + omega * r.x
+    };
+    return leg.ux * anchorVelocity.x + leg.uy * anchorVelocity.y;
+  });
+  return { ...state, vx, vy, omega, rates };
+}
+
+function drawClosedVelocityLab() {
+  const state = closedVelocityState();
+  closedVxLabel.textContent = fmt(state.vx);
+  closedVyLabel.textContent = fmt(state.vy);
+  closedOmegaLabel.textContent = fmt(state.omega);
+  closedVelocityReadout.innerHTML = `<strong>Differential inverse kinematics</strong>
+    <p>platform velocity = (${fmt(state.vx)}, ${fmt(state.vy)}, ${fmt(state.omega)})</p>
+    <p>leg rates rhodot = (${state.rates.map(fmt).join(", ")}).</p>
+    <p>Each rate is a projection onto its leg axis.</p>`;
+  const { ctx, w, h } = setupCanvas(closedVelocityCanvas);
+  grid(ctx, w, h);
+  const drawn = drawClosedPlatform(ctx, w, h, state, { rates: true });
+  state.legs.forEach((leg, i) => {
+    const p = drawn.map(leg.platform);
+    ctx.strokeStyle = ["#2364aa", "#2a8c6d", "#d39b25"][i];
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + state.rates[i] * 44 * leg.ux, p.y - state.rates[i] * 44 * leg.uy);
+    ctx.stroke();
+  });
+  const center = drawn.map({ x: state.x, y: state.y });
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(center.x, center.y);
+  ctx.lineTo(center.x + state.vx * 80, center.y - state.vy * 80);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("platform velocity and projected leg rates", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -2142,6 +2386,10 @@ function redrawActiveChapter() {
   if (active === "6") {
     drawAnalyticIkLab();
     drawNumericIkLab();
+  }
+  if (active === "7") {
+    drawClosedChainLab();
+    drawClosedVelocityLab();
   }
 }
 
@@ -2196,6 +2444,14 @@ const navLinksByChapter = {
     ["Velocity", "#chapter6-inverse-velocity"],
     ["Loops", "#chapter6-closed-loops"],
     ["Check", "#chapter6-check"]
+  ],
+  "7": [
+    ["Spine", "#chapter7-spine"],
+    ["Platform", "#chapter7-parallel"],
+    ["Differential", "#chapter7-differential"],
+    ["Stewart", "#chapter7-stewart"],
+    ["Singularities", "#chapter7-singularities"],
+    ["Check", "#chapter7-check"]
   ]
 };
 
@@ -2296,6 +2552,15 @@ ikBranch.addEventListener("change", drawAnalyticIkLab);
 [numIkTheta1, numIkTheta2, numIkIterations].forEach((input) => {
   input.addEventListener("input", drawNumericIkLab);
 });
+[closedX, closedY, closedPhi].forEach((input) => {
+  input.addEventListener("input", () => {
+    drawClosedChainLab();
+    drawClosedVelocityLab();
+  });
+});
+[closedVx, closedVy, closedOmega].forEach((input) => {
+  input.addEventListener("input", drawClosedVelocityLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -2315,5 +2580,7 @@ renderChapter5Concepts();
 renderGenericQuiz("#chapter5Quiz", chapter5QuizItems, "Not quite. Return to the Jacobian map and ask whether this option describes motion, force, or singularity behavior.");
 renderChapter6Concepts();
 renderGenericQuiz("#chapter6Quiz", chapter6QuizItems, "Not quite. Chapter 6 is about reversing forward kinematics with analytic branches or Jacobian-based numerical steps.");
+renderChapter7Concepts();
+renderGenericQuiz("#chapter7Quiz", chapter7QuizItems, "Not quite. Chapter 7 is about loop constraints, parallel mechanisms, and the velocity constraints created by closed chains.");
 setChapter("1");
 drawArm();

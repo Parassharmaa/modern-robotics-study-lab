@@ -20,6 +20,7 @@
         <button class="chapter-switch" data-target-chapter="4">Chapter 4</button>
         <button class="chapter-switch" data-target-chapter="5">Chapter 5</button>
         <button class="chapter-switch" data-target-chapter="6">Chapter 6</button>
+        <button class="chapter-switch" data-target-chapter="7">Chapter 7</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -950,6 +951,147 @@
           <p>These checks separate FK, IK, inverse velocity IK, and numerical iteration.</p>
         </div>
         <div class="quiz" id="chapter6Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="7">
+      <section class="chapter-hero chapter7-hero" id="chapter7" aria-labelledby="chapter7-title">
+        <div>
+          <p class="kicker">Chapter 7</p>
+          <h2 id="chapter7-title">Kinematics of Closed Chains</h2>
+          <p>
+            Closed-chain robots use multiple kinematic loops to constrain a moving
+            platform. Chapter 7 studies inverse and forward kinematics, differential
+            kinematics, and singularities for parallel mechanisms.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Loop constraint view</p>
+          <strong>g(theta, x) = 0</strong>
+          <p>
+            Serial arms map joint values forward. Closed chains must also keep every
+            loop closed, so actuator and platform velocities are tied by constraints.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter7-spine" aria-labelledby="chapter7-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter7-spine-title">What Chapter 7 covers</h2>
+          <p>
+            The chapter uses planar and spatial parallel robots to show why closed-chain
+            kinematics can invert the difficulty pattern of serial arms: inverse
+            kinematics may be straightforward while forward kinematics can be hard.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter7Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter7-parallel" aria-labelledby="parallel-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 7.1.1 intuition</p>
+          <h2 id="parallel-title">Planar parallel platform lab</h2>
+          <p>
+            Move the triangular platform. The inverse kinematics are the three leg
+            lengths from fixed base anchors to moving platform anchors. The same geometry
+            is the source of the loop constraints.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>platform x <span id="closedXLabel">20</span><input id="closedX" type="range" min="-100" max="100" value="20"></label>
+            <label>platform y <span id="closedYLabel">44</span><input id="closedY" type="range" min="-70" max="120" value="44"></label>
+            <label>platform phi <span id="closedPhiLabel">12 deg</span><input id="closedPhi" type="range" min="-55" max="55" value="12"></label>
+            <div class="matrix-readout" id="closedReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="closedCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter7-differential" aria-labelledby="closed-diff-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 7.2</p>
+          <h2 id="closed-diff-title">Differential kinematics: platform velocity to actuator rates</h2>
+          <p>
+            Differentiate the loop lengths. Each leg rate is the projection of the
+            moving platform anchor velocity onto that leg direction.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>vx <span id="closedVxLabel">0.60</span><input id="closedVx" type="range" min="-150" max="150" value="60"></label>
+            <label>vy <span id="closedVyLabel">0.20</span><input id="closedVy" type="range" min="-150" max="150" value="20"></label>
+            <label>omega <span id="closedOmegaLabel">0.35</span><input id="closedOmega" type="range" min="-120" max="120" value="35"></label>
+            <div class="matrix-readout" id="closedVelocityReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="closedVelocityCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter7-stewart" aria-labelledby="stewart-title">
+        <div>
+          <p class="eyebrow">Section 7.1.2</p>
+          <h2 id="stewart-title">Stewart-Gough platform generalizes the same idea</h2>
+          <p>
+            A Stewart-Gough platform has six extensible legs between a base and a moving
+            platform. The inverse kinematics are leg lengths; forward kinematics asks
+            which platform pose those six lengths imply.
+          </p>
+        </div>
+        <div class="comparison-grid">
+          <article class="concept-card">
+            <h3>Planar parallel</h3>
+            <p>Three platform coordinates: x, y, phi. Three leg lengths constrain them.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Stewart-Gough</h3>
+            <p>Six platform coordinates. Six leg lengths constrain spatial pose.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Common pattern</h3>
+            <p>Inverse length calculation is often easy; forward pose recovery can have multiple solutions.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter7-singularities" aria-labelledby="closed-sing-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 7.3</p>
+          <h2 id="closed-sing-title">Closed-chain singularities</h2>
+          <p>
+            Closed-chain singularities can create uncontrollable platform motions or
+            actuator motions that do not move the platform. The exact type depends on
+            which constraint Jacobian loses rank.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card">
+            <h3>Serial-like singularity</h3>
+            <p>The actuators cannot create some platform velocity direction.</p>
+          </article>
+          <article class="task-card">
+            <h3>Constraint singularity</h3>
+            <p>The closed chain may gain an uncontrolled motion even with locked actuators.</p>
+          </article>
+          <article class="task-card">
+            <h3>Design consequence</h3>
+            <p>Parallel robots can be stiff and accurate, but singularity avoidance is central.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter7-check" aria-labelledby="chapter7-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter7-quiz-title">Chapter 7 checkpoint</h2>
+          <p>These checks keep closed-chain kinematics distinct from the open-chain story.</p>
+        </div>
+        <div class="quiz" id="chapter7Quiz"></div>
       </section>
       </div>
     </main>
