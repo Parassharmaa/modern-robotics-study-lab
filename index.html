@@ -23,6 +23,7 @@
         <button class="chapter-switch" data-target-chapter="7">Chapter 7</button>
         <button class="chapter-switch" data-target-chapter="8">Chapter 8</button>
         <button class="chapter-switch" data-target-chapter="9">Chapter 9</button>
+        <button class="chapter-switch" data-target-chapter="10">Chapter 10</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1351,6 +1352,132 @@
           <p>These checks separate path geometry, timing, via points, and time-optimal scaling.</p>
         </div>
         <div class="quiz" id="chapter9Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="10">
+      <section class="chapter-hero chapter10-hero" id="chapter10" aria-labelledby="chapter10-title">
+        <div>
+          <p class="kicker">Chapter 10</p>
+          <h2 id="chapter10-title">Motion Planning</h2>
+          <p>
+            Motion planning finds a collision-free route through configuration space.
+            Chapter 10 surveys complete planners, grid methods, sampling methods,
+            potential fields, nonlinear optimization, and smoothing.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Planning question</p>
+          <strong>Find q(s) in Cfree from qstart to qgoal</strong>
+          <p>
+            Obstacles in the workspace become forbidden regions in C-space. Planners
+            search the remaining free space for a connected route.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter10-spine" aria-labelledby="chapter10-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter10-spine-title">What Chapter 10 covers</h2>
+          <p>
+            The chapter moves from problem definitions and C-space obstacles to graph
+            search, grids, sampling, potential fields, optimization, and smoothing.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter10Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter10-grid" aria-labelledby="grid-planner-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 10.2 through 10.4</p>
+          <h2 id="grid-planner-title">Grid search through C-space obstacles</h2>
+          <p>
+            Choose a planner mode. The grid is a tiny C-space: blocked cells are
+            obstacles, and the planner searches graph edges through free cells.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>planner
+              <select id="plannerMode">
+                <option value="bfs">Breadth-first graph search</option>
+                <option value="astar">A* search</option>
+                <option value="greedy">Greedy potential descent</option>
+              </select>
+            </label>
+            <label>obstacle gap <span id="plannerGapLabel">4</span><input id="plannerGap" type="range" min="1" max="7" value="4"></label>
+            <div class="matrix-readout" id="plannerReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="plannerCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter10-sampling" aria-labelledby="sampling-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 10.5</p>
+          <h2 id="sampling-title">Sampling planners build graphs in free space</h2>
+          <p>
+            RRTs grow trees from existing nodes toward samples. PRMs sample many
+            milestones, connect nearby collision-free neighbors, and then search the roadmap.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>samples <span id="sampleCountLabel">48</span><input id="sampleCount" type="range" min="12" max="90" value="48"></label>
+            <div class="matrix-readout" id="samplingReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="samplingCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter10-potential" aria-labelledby="potential-title">
+        <div>
+          <p class="eyebrow">Section 10.6</p>
+          <h2 id="potential-title">Potential fields can guide or trap motion</h2>
+          <p>
+            Attractive potential pulls toward the goal; repulsive potential pushes away
+            from obstacles. It is intuitive and useful, but local minima are the classic
+            failure mode.
+          </p>
+          <div class="formula-panel compact">
+            <p class="eyebrow">Gradient view</p>
+            <strong>qdot follows negative potential gradient</strong>
+            <p>Navigation functions are designed to avoid unwanted local minima.</p>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <canvas id="potentialCanvas" width="620" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="band" id="chapter10-smoothing" aria-labelledby="smoothing-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 10.7 and 10.8</p>
+          <h2 id="smoothing-title">Optimization and smoothing improve rough paths</h2>
+          <p>
+            Search often gives a jagged route. Smoothing shortcuts and nonlinear
+            optimization can shorten and regularize it while keeping collision constraints.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Shortcut smoothing</h3><p>Try replacing path subsections with direct collision-free segments.</p></article>
+          <article class="task-card"><h3>Nonlinear optimization</h3><p>Optimize path quality while penalizing or constraining collisions.</p></article>
+          <article class="task-card"><h3>Planner property tradeoffs</h3><p>Completeness, optimality, speed, and implementation complexity rarely all improve together.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter10-check" aria-labelledby="chapter10-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter10-quiz-title">Chapter 10 checkpoint</h2>
+          <p>These checks distinguish grid search, sampling, potential fields, and smoothing.</p>
+        </div>
+        <div class="quiz" id="chapter10Quiz"></div>
       </section>
       </div>
     </main>

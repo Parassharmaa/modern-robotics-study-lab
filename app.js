@@ -845,6 +845,25 @@ const chapter9QuizItems = [
   { q: "What does the s, sdot phase plane help with?", answers: ["Time-optimal time scaling under limits.", "URDF parsing.", "Choosing link lengths."], correct: 0, note: "Yes. It is the natural picture for acceleration-limited path timing." }
 ];
 
+const chapter10Concepts = [
+  { title: "Motion planning problem", text: "Find a path from start to goal through collision-free configuration space." },
+  { title: "C-space obstacles", text: "Workspace obstacles induce forbidden sets in configuration space." },
+  { title: "Distance and collision tests", text: "Planners repeatedly ask whether configurations or edges are safe." },
+  { title: "Graphs and trees", text: "Many planners reduce motion planning to graph search over sampled or discretized states." },
+  { title: "Grid methods", text: "Discretize C-space into cells and search neighbors, sometimes at multiple resolutions." },
+  { title: "Sampling methods", text: "RRT and PRM avoid full grids by sampling free configurations." },
+  { title: "Potential fields", text: "Use attractive and repulsive functions to define a descent direction." },
+  { title: "Optimization and smoothing", text: "Improve rough paths after search while preserving collision-free constraints." }
+];
+
+const chapter10QuizItems = [
+  { q: "What is Cfree?", answers: ["The collision-free subset of configuration space.", "The set of motor torques.", "Only endpoint positions."], correct: 0, note: "Yes. Planning searches through Cfree." },
+  { q: "What does a grid planner search?", answers: ["A graph induced by neighboring free cells.", "Only continuous torques.", "A URDF file."], correct: 0, note: "Right. Discretization turns planning into graph search." },
+  { q: "What is an RRT?", answers: ["A tree grown through random samples in free space.", "A dynamics equation.", "A force controller."], correct: 0, note: "Exactly. RRTs explore by extending from existing nodes toward samples." },
+  { q: "What is a potential-field weakness?", answers: ["It can get stuck in local minima.", "It cannot represent goals.", "It always guarantees optimality."], correct: 0, note: "Good. Potential fields are intuitive but can trap descent." },
+  { q: "Why smooth a planned path?", answers: ["Search paths can be jagged or unnecessarily long.", "Smoothing makes collisions irrelevant.", "It replaces all planning."], correct: 0, note: "Yes. Smoothing improves a found path, but still must respect obstacles." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -998,6 +1017,16 @@ const viaEndLabel = document.querySelector("#viaEndLabel");
 const viaReadout = document.querySelector("#viaReadout");
 const viaCanvas = document.querySelector("#viaCanvas");
 const phaseCanvas = document.querySelector("#phaseCanvas");
+const plannerMode = document.querySelector("#plannerMode");
+const plannerGap = document.querySelector("#plannerGap");
+const plannerGapLabel = document.querySelector("#plannerGapLabel");
+const plannerReadout = document.querySelector("#plannerReadout");
+const plannerCanvas = document.querySelector("#plannerCanvas");
+const sampleCount = document.querySelector("#sampleCount");
+const sampleCountLabel = document.querySelector("#sampleCountLabel");
+const samplingReadout = document.querySelector("#samplingReadout");
+const samplingCanvas = document.querySelector("#samplingCanvas");
+const potentialCanvas = document.querySelector("#potentialCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -2694,6 +2723,197 @@ function drawPhasePlane() {
   ctx.fillText("yellow: velocity limit, blue: accelerate then brake", left + 20, top + 18);
 }
 
+function renderChapter10Concepts() {
+  const el = document.querySelector("#chapter10Concepts");
+  el.innerHTML = chapter10Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function plannerGrid(gap) {
+  const n = 14;
+  const blocked = new Set();
+  for (let y = 2; y < 12; y += 1) {
+    if (y !== gap && y !== gap + 1) blocked.add(`6,${y}`);
+  }
+  for (let x = 2; x < 11; x += 1) {
+    if (x !== 3 && x !== 4) blocked.add(`${x},8`);
+  }
+  return { n, blocked, start: [1, 12], goal: [12, 1] };
+}
+
+function searchGrid(mode, gap) {
+  const gridData = plannerGrid(gap);
+  const { n, blocked, start, goal } = gridData;
+  const key = (p) => `${p[0]},${p[1]}`;
+  const h = (p) => Math.abs(p[0] - goal[0]) + Math.abs(p[1] - goal[1]);
+  const frontier = [{ p: start, cost: 0, priority: 0 }];
+  const came = new Map([[key(start), null]]);
+  const cost = new Map([[key(start), 0]]);
+  const visited = [];
+  while (frontier.length) {
+    frontier.sort((a, b) => a.priority - b.priority);
+    const cur = frontier.shift();
+    const ck = key(cur.p);
+    visited.push(cur.p);
+    if (ck === key(goal)) break;
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach((d) => {
+      const np = [cur.p[0] + d[0], cur.p[1] + d[1]];
+      const nk = key(np);
+      if (np[0] < 0 || np[1] < 0 || np[0] >= n || np[1] >= n || blocked.has(nk)) return;
+      const nc = cost.get(ck) + 1;
+      if (!cost.has(nk) || nc < cost.get(nk)) {
+        cost.set(nk, nc);
+        came.set(nk, cur.p);
+        const priority = mode === "bfs" ? nc : mode === "greedy" ? h(np) : nc + h(np);
+        frontier.push({ p: np, cost: nc, priority });
+      }
+    });
+  }
+  const path = [];
+  let cur = goal;
+  while (cur && came.has(key(cur))) {
+    path.push(cur);
+    cur = came.get(key(cur));
+  }
+  path.reverse();
+  return { ...gridData, visited, path: path[0] ? path : [] };
+}
+
+function drawPlannerLab() {
+  const gap = Number(plannerGap.value);
+  const mode = plannerMode.value;
+  const result = searchGrid(mode, gap);
+  plannerGapLabel.textContent = String(gap);
+  plannerReadout.innerHTML = `<strong>${plannerMode.options[plannerMode.selectedIndex].text}</strong>
+    <p>visited cells = ${result.visited.length}, path length = ${result.path.length ? result.path.length - 1 : "none"}.</p>
+    <p>Blocked cells are C-space obstacles; free neighbor links form the graph.</p>`;
+  const { ctx, w, h } = setupCanvas(plannerCanvas);
+  ctx.clearRect(0, 0, w, h);
+  const size = Math.min((w - 36) / result.n, (h - 36) / result.n);
+  const ox = (w - size * result.n) / 2;
+  const oy = (h - size * result.n) / 2;
+  const key = (p) => `${p[0]},${p[1]}`;
+  result.visited.forEach((p) => {
+    ctx.fillStyle = "#edf5ff";
+    ctx.fillRect(ox + p[0] * size, oy + p[1] * size, size, size);
+  });
+  result.blocked.forEach((k) => {
+    const [x, y] = k.split(",").map(Number);
+    ctx.fillStyle = "#16202a";
+    ctx.fillRect(ox + x * size, oy + y * size, size, size);
+  });
+  ctx.strokeStyle = "#d6dee6";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= result.n; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(ox + i * size, oy);
+    ctx.lineTo(ox + i * size, oy + result.n * size);
+    ctx.moveTo(ox, oy + i * size);
+    ctx.lineTo(ox + result.n * size, oy + i * size);
+    ctx.stroke();
+  }
+  if (result.path.length) {
+    ctx.strokeStyle = "#b84a3a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    result.path.forEach((p, i) => {
+      const x = ox + (p[0] + 0.5) * size;
+      const y = oy + (p[1] + 0.5) * size;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+  [result.start, result.goal].forEach((p, i) => {
+    ctx.fillStyle = i ? "#2a8c6d" : "#2364aa";
+    ctx.beginPath();
+    ctx.arc(ox + (p[0] + 0.5) * size, oy + (p[1] + 0.5) * size, size * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawSamplingLab() {
+  const count = Number(sampleCount.value);
+  sampleCountLabel.textContent = String(count);
+  samplingReadout.innerHTML = `<strong>PRM/RRT intuition</strong>
+    <p>${count} deterministic samples are shown. Edges connect nearby free samples when the straight segment is obstacle-free.</p>
+    <p>Sampling planners trade exact coverage for practical exploration of high-dimensional spaces.</p>`;
+  const { ctx, w, h } = setupCanvas(samplingCanvas);
+  grid(ctx, w, h);
+  const obstacles = [
+    { x: w * 0.45, y: h * 0.42, r: 48 },
+    { x: w * 0.63, y: h * 0.66, r: 38 }
+  ];
+  obstacles.forEach((o) => {
+    ctx.fillStyle = "rgba(22, 32, 42, 0.82)";
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  function free(p) {
+    return obstacles.every((o) => Math.hypot(p.x - o.x, p.y - o.y) > o.r + 8);
+  }
+  const pts = [];
+  for (let i = 0; pts.length < count && i < count * 4; i += 1) {
+    const p = { x: 34 + ((i * 83) % Math.floor(w - 68)), y: 32 + ((i * 137) % Math.floor(h - 64)) };
+    if (free(p)) pts.push(p);
+  }
+  ctx.strokeStyle = "rgba(35, 100, 170, 0.34)";
+  ctx.lineWidth = 1.5;
+  pts.forEach((a, i) => {
+    pts.slice(i + 1).forEach((b) => {
+      if (Math.hypot(a.x - b.x, a.y - b.y) < 95) {
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    });
+  });
+  pts.forEach((p) => {
+    ctx.fillStyle = "#2364aa";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawPotentialField() {
+  const { ctx, w, h } = setupCanvas(potentialCanvas);
+  grid(ctx, w, h);
+  const goal = { x: w - 80, y: 72 };
+  const obs = { x: w * 0.48, y: h * 0.52, r: 50 };
+  ctx.fillStyle = "rgba(22, 32, 42, 0.82)";
+  ctx.beginPath();
+  ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#2a8c6d";
+  ctx.beginPath();
+  ctx.arc(goal.x, goal.y, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 2;
+  for (let x = 60; x < w - 40; x += 58) {
+    for (let y = 52; y < h - 34; y += 50) {
+      const att = { x: goal.x - x, y: goal.y - y };
+      const od = { x: x - obs.x, y: y - obs.y };
+      const d = Math.max(35, Math.hypot(od.x, od.y));
+      const rep = d < 120 ? { x: (od.x / d) * (120 - d) * 2.4, y: (od.y / d) * (120 - d) * 2.4 } : { x: 0, y: 0 };
+      const v = { x: att.x * 0.04 + rep.x, y: att.y * 0.04 + rep.y };
+      const mag = Math.max(1, Math.hypot(v.x, v.y));
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + (v.x / mag) * 18, y + (v.y / mag) * 18);
+      ctx.stroke();
+    }
+  }
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("goal attracts; obstacle repels", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -2739,6 +2959,11 @@ function redrawActiveChapter() {
     drawTrajectoryLab();
     drawViaLab();
     drawPhasePlane();
+  }
+  if (active === "10") {
+    drawPlannerLab();
+    drawSamplingLab();
+    drawPotentialField();
   }
 }
 
@@ -2817,6 +3042,14 @@ const navLinksByChapter = {
     ["Via", "#chapter9-via"],
     ["Phase", "#chapter9-phase"],
     ["Check", "#chapter9-check"]
+  ],
+  "10": [
+    ["Spine", "#chapter10-spine"],
+    ["Grid", "#chapter10-grid"],
+    ["Sampling", "#chapter10-sampling"],
+    ["Potential", "#chapter10-potential"],
+    ["Smoothing", "#chapter10-smoothing"],
+    ["Check", "#chapter10-check"]
   ]
 };
 
@@ -2935,6 +3168,9 @@ ikBranch.addEventListener("change", drawAnalyticIkLab);
 [trajDuration, trajTime].forEach((input) => input.addEventListener("input", drawTrajectoryLab));
 trajScaling.addEventListener("change", drawTrajectoryLab);
 [viaHeight, viaEnd].forEach((input) => input.addEventListener("input", drawViaLab));
+plannerMode.addEventListener("change", drawPlannerLab);
+plannerGap.addEventListener("input", drawPlannerLab);
+sampleCount.addEventListener("input", drawSamplingLab);
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -2960,5 +3196,7 @@ renderChapter8Concepts();
 renderGenericQuiz("#chapter8Quiz", chapter8QuizItems, "Not quite. Chapter 8 is about effort, inertia, gravity, velocity coupling, and actuator realities.");
 renderChapter9Concepts();
 renderGenericQuiz("#chapter9Quiz", chapter9QuizItems, "Not quite. Chapter 9 separates path geometry from timing; compare the option to that split.");
+renderChapter10Concepts();
+renderGenericQuiz("#chapter10Quiz", chapter10QuizItems, "Not quite. Chapter 10 is about C-space obstacles, search structures, sampling, potentials, and smoothing.");
 setChapter("1");
 drawArm();
