@@ -445,6 +445,104 @@ const chapter3QuizItems = [
   }
 ];
 
+const chapter4Concepts = [
+  {
+    title: "Forward kinematics problem",
+    text: "Given joint coordinates theta, compute the position and orientation of the end-effector frame."
+  },
+  {
+    title: "Planar 3R warmup",
+    text: "For three planar revolute joints, x and y are sums of link vectors and phi is theta1 + theta2 + theta3."
+  },
+  {
+    title: "Home configuration M",
+    text: "M is the end-effector pose when all joint coordinates are zero. It anchors the PoE formula."
+  },
+  {
+    title: "Space screw axes",
+    text: "Screw axes Si are written in the fixed base frame at the home configuration."
+  },
+  {
+    title: "Product of exponentials",
+    text: "Each e^[Si]thetai is a rigid-body motion caused by one joint. Multiplying them composes the chain."
+  },
+  {
+    title: "Body screw axes",
+    text: "The same robot can be described with body-frame screw axes Bi, giving T = M e^[B1]theta1 ... e^[Bn]thetan."
+  },
+  {
+    title: "Order matters",
+    text: "Rigid-body transformations generally do not commute, so the order of exponentials carries the robot's serial structure."
+  },
+  {
+    title: "URDF",
+    text: "URDF is an XML robot-description format for links, joints, frames, geometry, inertia, axes, and limits."
+  }
+];
+
+const chapter4QuizItems = [
+  {
+    q: "What is the input to forward kinematics?",
+    answers: [
+      "The joint coordinates theta.",
+      "The desired end-effector pose.",
+      "Only the robot mass matrix."
+    ],
+    correct: 0,
+    note: "Yes. Forward kinematics maps joint values to the end-effector pose."
+  },
+  {
+    q: "In the space-frame PoE formula, where are the screw axes expressed?",
+    answers: [
+      "In the fixed base or space frame at the home configuration.",
+      "In the moving end-effector frame after every joint moves.",
+      "Only in URDF link frames."
+    ],
+    correct: 0,
+    note: "Right. Slist is fixed at home, which makes the formula systematic."
+  },
+  {
+    q: "What is M in T(theta) = e^[S1]theta1 ... e^[Sn]thetan M?",
+    answers: [
+      "The home configuration of the end-effector.",
+      "The current mass matrix.",
+      "The mobile base pose."
+    ],
+    correct: 0,
+    note: "Exactly. M is the end-effector transform when all joint coordinates are zero."
+  },
+  {
+    q: "For a revolute joint through point q with direction omega, what is v?",
+    answers: [
+      "v = -omega cross q.",
+      "v = omega plus q.",
+      "v is always zero."
+    ],
+    correct: 0,
+    note: "Good. The pair S = (omega, v) encodes the joint axis as a screw."
+  },
+  {
+    q: "Why does exponential order matter?",
+    answers: [
+      "Rigid-body transformations generally do not commute.",
+      "The book chooses the order randomly.",
+      "Only prismatic joints can be first."
+    ],
+    correct: 0,
+    note: "Yes. Serial-chain geometry is carried by the ordered product."
+  },
+  {
+    q: "What does URDF mainly provide?",
+    answers: [
+      "A structured description of links, joints, axes, origins, geometry, and inertial data.",
+      "A numerical inverse kinematics solver.",
+      "A replacement for all coordinate frames."
+    ],
+    correct: 0,
+    note: "Right. URDF stores robot structure; kinematics software then consumes it."
+  }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -503,6 +601,16 @@ const twistCanvas = document.querySelector("#twistCanvas");
 const twistReadout = document.querySelector("#twistReadout");
 const wrenchCanvas = document.querySelector("#wrenchCanvas");
 const wrenchPower = document.querySelector("#wrenchPower");
+const fkTheta1 = document.querySelector("#fkTheta1");
+const fkTheta2 = document.querySelector("#fkTheta2");
+const fkTheta3 = document.querySelector("#fkTheta3");
+const fkTheta1Label = document.querySelector("#fkTheta1Label");
+const fkTheta2Label = document.querySelector("#fkTheta2Label");
+const fkTheta3Label = document.querySelector("#fkTheta3Label");
+const fkReadout = document.querySelector("#fkReadout");
+const fkCanvas = document.querySelector("#fkCanvas");
+const screwReadout = document.querySelector("#screwReadout");
+const screwCanvas = document.querySelector("#screwCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -1338,6 +1446,129 @@ function drawWrenchLab() {
   ctx.fillText("force plus moment = wrench", cx - 84, cy + 82);
 }
 
+function renderChapter4Concepts() {
+  const el = document.querySelector("#chapter4Concepts");
+  el.innerHTML = chapter4Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function drawPlanarFk() {
+  const t1 = Number(fkTheta1.value);
+  const t2 = Number(fkTheta2.value);
+  const t3 = Number(fkTheta3.value);
+  fkTheta1Label.textContent = `${t1} deg`;
+  fkTheta2Label.textContent = `${t2} deg`;
+  fkTheta3Label.textContent = `${t3} deg`;
+  const lengths = [105, 86, 64];
+  const a1 = degToRad(t1);
+  const a2 = degToRad(t1 + t2);
+  const a3 = degToRad(t1 + t2 + t3);
+  const pts = [{ x: 0, y: 0 }];
+  [a1, a2, a3].forEach((angle, i) => {
+    const prev = pts[pts.length - 1];
+    pts.push({
+      x: prev.x + lengths[i] * Math.cos(angle),
+      y: prev.y + lengths[i] * Math.sin(angle)
+    });
+  });
+  const end = pts[3];
+  const phi = t1 + t2 + t3;
+  fkReadout.innerHTML = `<strong>Planar 3R result</strong>
+    <p>x = ${fmt(end.x)}, y = ${fmt(end.y)}, phi = ${phi} deg</p>
+    <p>x = L1 cos(theta1) + L2 cos(theta1 + theta2) + L3 cos(theta1 + theta2 + theta3)</p>
+    <p>y uses the same cumulative angles with sin.</p>`;
+
+  const { ctx, w, h } = setupCanvas(fkCanvas);
+  grid(ctx, w, h);
+  const base = { x: w / 2 - 110, y: h / 2 + 80 };
+  const mapped = pts.map((p) => ({ x: base.x + p.x, y: base.y - p.y }));
+  ctx.strokeStyle = "rgba(35, 100, 170, 0.18)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(base.x, base.y, lengths.reduce((a, b) => a + b, 0), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineCap = "round";
+  ctx.lineWidth = 12;
+  ["#2364aa", "#2a8c6d", "#d39b25"].forEach((color, i) => {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(mapped[i].x, mapped[i].y);
+    ctx.lineTo(mapped[i + 1].x, mapped[i + 1].y);
+    ctx.stroke();
+  });
+  mapped.forEach((p, i) => {
+    ctx.fillStyle = i === 3 ? "#b84a3a" : "#fff";
+    ctx.strokeStyle = "#16202a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, i === 3 ? 9 : 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  drawFrame2d(ctx, mapped[3].x, mapped[3].y, degToRad(phi), "{e}", 46);
+}
+
+function drawScrewAxisLab() {
+  const omega = [0, 0, 1];
+  const q = [1.2, 0.7, 0];
+  const v = [q[1], -q[0], 0];
+  screwReadout.innerHTML = `<strong>Revolute screw axis</strong>
+    <p>omega = (${omega.join(", ")}), q = (${q.map(fmt).join(", ")}), v = -omega x q = (${v.map(fmt).join(", ")}).</p>
+    <p>S = (omega, v) = (${omega.concat(v).map(fmt).join(", ")}).</p>`;
+  const { ctx, w, h } = setupCanvas(screwCanvas);
+  grid(ctx, w, h);
+  const cx = w / 2;
+  const cy = h / 2 + 24;
+  const qx = cx + q[0] * 82;
+  const qy = cy - q[1] * 82;
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(qx, qy - 110);
+  ctx.lineTo(qx, qy + 110);
+  ctx.stroke();
+  ctx.fillStyle = "#b84a3a";
+  ctx.beginPath();
+  ctx.arc(qx, qy, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(qx, qy);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("point q on axis", qx + 12, qy - 8);
+  ctx.fillText("omega points out of the page", qx - 72, qy + 128);
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(qx, qy);
+  ctx.lineTo(qx + v[0] * 54, qy - v[1] * 54);
+  ctx.stroke();
+}
+
+function renderPoeSteps() {
+  const steps = [
+    ["1. Attach frames", "Choose a fixed space frame {s} and an end-effector frame {b}. Define the home pose M when theta = 0."],
+    ["2. Find each joint screw", "For every revolute or prismatic joint, write the screw axis Si in the space frame at home."],
+    ["3. Exponentiate joint motion", "Use e^[Si]thetai to turn each joint coordinate into a rigid-body transform."],
+    ["4. Multiply in chain order", "Compose e^[S1]theta1 through e^[Sn]thetan. The order follows the serial chain."],
+    ["5. Apply home pose", "Postmultiply by M to place the end-effector frame at its home offset after all joint motions."],
+    ["6. Cross-check body form", "Optionally convert to body screw axes Bi = [Ad M^-1]Si and use T = M e^[B1]theta1 ... e^[Bn]thetan."]
+  ];
+  document.querySelector("#poeSteps").innerHTML = steps.map((step) => `
+    <article class="pipe-step poe-step">
+      <b>${step[0].split(".")[0]}</b>
+      <div><h3>${step[0]}</h3><p>${step[1]}</p></div>
+    </article>
+  `).join("");
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -1357,6 +1588,10 @@ function redrawActiveChapter() {
     drawSe3Lab();
     drawTwistLab();
     drawWrenchLab();
+  }
+  if (active === "4") {
+    drawPlanarFk();
+    drawScrewAxisLab();
   }
 }
 
@@ -1386,6 +1621,15 @@ const navLinksByChapter = {
     ["Twists", "#chapter3-twists"],
     ["Wrenches", "#chapter3-wrenches"],
     ["Check", "#chapter3-check"]
+  ],
+  "4": [
+    ["Spine", "#chapter4-spine"],
+    ["3R FK", "#chapter4-planar"],
+    ["Screws", "#chapter4-screws"],
+    ["PoE", "#chapter4-poe"],
+    ["Body", "#chapter4-body"],
+    ["URDF", "#chapter4-urdf"],
+    ["Check", "#chapter4-check"]
   ]
 };
 
@@ -1448,6 +1692,9 @@ se3Yaw.addEventListener("input", drawSe3Lab);
 twistMode.addEventListener("change", drawTwistLab);
 twistTheta.addEventListener("input", drawTwistLab);
 twistPitch.addEventListener("input", drawTwistLab);
+fkTheta1.addEventListener("input", drawPlanarFk);
+fkTheta2.addEventListener("input", drawPlanarFk);
+fkTheta3.addEventListener("input", drawPlanarFk);
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -1460,5 +1707,8 @@ renderTaskCards();
 renderGenericQuiz("#chapter2Quiz", chapter2QuizItems, "Not quite. Revisit the concept card above, then compare this option to the definition from Chapter 2.");
 renderChapter3Concepts();
 renderGenericQuiz("#chapter3Quiz", chapter3QuizItems, "Not quite. Chapter 3 is careful about what each object represents; check the nearby lab and try again.");
+renderChapter4Concepts();
+renderPoeSteps();
+renderGenericQuiz("#chapter4Quiz", chapter4QuizItems, "Not quite. Chapter 4 is about mapping known joint values forward to a pose; compare this with the PoE recipe above.");
 setChapter("1");
 drawArm();

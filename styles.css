@@ -475,6 +475,12 @@ canvas {
     #fff;
 }
 
+.chapter4-hero {
+  background:
+    linear-gradient(115deg, rgba(211, 155, 37, 0.16), rgba(255, 255, 255, 0.84) 46%),
+    #fff;
+}
+
 .chapter-hero > *,
 .roadmap-layout > *,
 .split > *,
@@ -658,7 +664,9 @@ canvas {
 }
 
 .concept-grid,
-.task-cards {
+.task-cards,
+.comparison-grid,
+.poe-steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
@@ -713,6 +721,10 @@ canvas {
   background: #fff;
 }
 
+.poe-step {
+  align-items: start;
+}
+
 .pipe-step b {
   display: grid;
   place-items: center;
@@ -763,6 +775,29 @@ footer {
 code {
   padding: 2px 5px;
   background: #eef3f7;
+}
+
+.code-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.code-card pre {
+  margin: 0;
+}
+
+.code-card code {
+  display: block;
+  min-width: 520px;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 @media (max-width: 900px) {

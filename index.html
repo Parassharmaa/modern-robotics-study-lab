@@ -17,6 +17,7 @@
         <button class="chapter-switch active" data-target-chapter="1">Chapter 1</button>
         <button class="chapter-switch" data-target-chapter="2">Chapter 2</button>
         <button class="chapter-switch" data-target-chapter="3">Chapter 3</button>
+        <button class="chapter-switch" data-target-chapter="4">Chapter 4</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -527,6 +528,152 @@
           <p>Own these distinctions before moving to product-of-exponentials kinematics.</p>
         </div>
         <div class="quiz" id="chapter3Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="4">
+      <section class="chapter-hero chapter4-hero" id="chapter4" aria-labelledby="chapter4-title">
+        <div>
+          <p class="kicker">Chapter 4</p>
+          <h2 id="chapter4-title">Forward Kinematics</h2>
+          <p>
+            Forward kinematics asks for the end-effector pose when the joint coordinates
+            are known. Chapter 4 starts with a planar 3R arm, then gives the systematic
+            product-of-exponentials formula for general open-chain robots.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Core formulas</p>
+          <strong>T(theta) = e^[S1]theta1 ... e^[Sn]thetan M</strong>
+          <p>
+            Space form uses screw axes expressed in the fixed base frame. Body form uses
+            screw axes expressed in the end-effector frame at the home configuration.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter4-spine" aria-labelledby="chapter4-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter4-spine-title">What Chapter 4 covers</h2>
+          <p>
+            The chapter is a bridge from rigid-body motion notation to robot arms. The
+            key skill is turning a robot's home pose and joint screw axes into a pose
+            function T(theta).
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter4Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter4-planar" aria-labelledby="planar-fk-title">
+        <div class="section-head">
+          <p class="eyebrow">Opening example</p>
+          <h2 id="planar-fk-title">Planar 3R forward kinematics</h2>
+          <p>
+            For a 3R planar chain, the end-effector position is a sum of link vectors.
+            The tool angle is the cumulative joint angle. This is the concrete example
+            the chapter uses before moving to spatial notation.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>theta1 <span id="fkTheta1Label">28 deg</span><input id="fkTheta1" type="range" min="-170" max="170" value="28"></label>
+            <label>theta2 <span id="fkTheta2Label">-42 deg</span><input id="fkTheta2" type="range" min="-170" max="170" value="-42"></label>
+            <label>theta3 <span id="fkTheta3Label">36 deg</span><input id="fkTheta3" type="range" min="-170" max="170" value="36"></label>
+            <div class="matrix-readout" id="fkReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="fkCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter4-screws" aria-labelledby="screw-title">
+        <div>
+          <p class="eyebrow">Screw axes</p>
+          <h2 id="screw-title">A revolute joint becomes S = (omega, -omega x q)</h2>
+          <p>
+            To use PoE, each joint axis must become a screw axis. For a revolute joint,
+            choose a point q on the axis and a unit direction omega. The linear part is
+            v = -omega x q. For a prismatic joint, omega is zero and v is the translation
+            direction.
+          </p>
+          <div class="matrix-readout" id="screwReadout"></div>
+        </div>
+        <div class="visual-panel">
+          <canvas id="screwCanvas" width="620" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="band" id="chapter4-poe" aria-labelledby="poe-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 4.1</p>
+          <h2 id="poe-title">Product of exponentials, step by step</h2>
+          <p>
+            Each joint motion is an exponential map of a screw axis. The product composes
+            those rigid-body motions, then applies the home configuration M.
+          </p>
+        </div>
+        <div class="poe-steps" id="poeSteps"></div>
+      </section>
+
+      <section class="band" id="chapter4-body" aria-labelledby="body-title">
+        <div class="section-head">
+          <p class="eyebrow">Space and body forms</p>
+          <h2 id="body-title">Same pose, different screw-axis coordinates</h2>
+          <p>
+            The space form orders exponentials before M. The body form puts M first and
+            uses screw axes written in the body frame. The two formulas produce the same
+            transform when the screw lists match the same physical robot.
+          </p>
+        </div>
+        <div class="comparison-grid">
+          <article class="concept-card">
+            <h3>Space form</h3>
+            <p>T(theta) = e^[S1]theta1 e^[S2]theta2 ... e^[Sn]thetan M</p>
+            <p>Axes Si are expressed in the fixed space frame at home.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Body form</h3>
+            <p>T(theta) = M e^[B1]theta1 e^[B2]theta2 ... e^[Bn]thetan</p>
+            <p>Axes Bi are expressed in the end-effector frame at home.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Relationship</h3>
+            <p>Bi = [Ad M^-1] Si</p>
+            <p>The adjoint from Chapter 3 converts the coordinate description of the same screw axis.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter4-urdf" aria-labelledby="urdf-title">
+        <div>
+          <p class="eyebrow">Section 4.2</p>
+          <h2 id="urdf-title">URDF describes robot links and joints</h2>
+          <p>
+            The Universal Robot Description Format is an XML format for tree-structured
+            robots. It names links, joints, joint origins, joint axes, geometry, mass,
+            inertia, and limits. It is not the PoE formula itself, but it stores the
+            information a kinematics tool needs.
+          </p>
+        </div>
+        <div class="code-card">
+<pre><code>&lt;joint name="shoulder_pan_joint" type="continuous"&gt;
+  &lt;parent link="base_link" /&gt;
+  &lt;child link="shoulder_link" /&gt;
+  &lt;origin xyz="0 0 0.089159" rpy="0 0 0" /&gt;
+  &lt;axis xyz="0 0 1" /&gt;
+&lt;/joint&gt;</code></pre>
+        </div>
+      </section>
+
+      <section class="band" id="chapter4-check" aria-labelledby="chapter4-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter4-quiz-title">Chapter 4 checkpoint</h2>
+          <p>These checks make sure the PoE formula is a usable recipe, not just a symbol.</p>
+        </div>
+        <div class="quiz" id="chapter4Quiz"></div>
       </section>
       </div>
     </main>
