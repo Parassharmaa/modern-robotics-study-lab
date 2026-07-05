@@ -864,6 +864,30 @@ const chapter10QuizItems = [
   { q: "Why smooth a planned path?", answers: ["Search paths can be jagged or unnecessarily long.", "Smoothing makes collisions irrelevant.", "It replaces all planning."], correct: 0, note: "Yes. Smoothing improves a found path, but still must respect obstacles." }
 ];
 
+const chapter11Concepts = [
+  { title: "Control system overview", text: "A controller compares desired and measured motion, then sends velocity, torque, or force commands to the robot." },
+  { title: "Error dynamics", text: "Instead of only asking what the controller computes, Chapter 11 asks how the tracking error evolves over time." },
+  { title: "First-order response", text: "Velocity P control can make the error decay exponentially, with larger gain giving faster convergence." },
+  { title: "Second-order response", text: "PI velocity control and PD torque control behave like mass-spring-damper systems with damping and natural frequency." },
+  { title: "Velocity-input control", text: "Feedforward velocity follows a planned trajectory; feedback terms correct accumulated position error." },
+  { title: "Torque-input control", text: "PID, feedforward torque, gravity compensation, and computed torque command physical effort directly." },
+  { title: "Multi-joint control", text: "Decentralized joint controllers are simple; model-based computed torque accounts for coupled mass, Coriolis, and gravity terms." },
+  { title: "Task-space control", text: "End-effector error is represented as a twist and mapped through the Jacobian or inverse dynamics." },
+  { title: "Force control", text: "When the task is to push, polish, or hold contact, the controlled output is wrench rather than only position." },
+  { title: "Hybrid motion-force control", text: "Constrained directions regulate force while unconstrained directions regulate motion." },
+  { title: "Impedance and admittance", text: "Impedance specifies force from motion error; admittance specifies motion response from measured force." },
+  { title: "Low-level torque loops", text: "Real robots rely on amplifier, motor, gear, friction, saturation, and sensing details below the high-level law." }
+];
+
+const chapter11QuizItems = [
+  { q: "What is error dynamics?", answers: ["The time evolution of tracking error under a controller.", "The geometry of C-space obstacles.", "The number of links in a mechanism."], correct: 0, note: "Yes. Chapter 11 judges controllers by the error response they produce." },
+  { q: "Why add feedforward to feedback?", answers: ["Feedforward anticipates the desired motion while feedback corrects mistakes.", "It removes the need for sensors.", "It guarantees no actuator limits."], correct: 0, note: "Right. The combination is usually stronger than either piece alone." },
+  { q: "What does computed torque use?", answers: ["A model of robot dynamics plus feedback acceleration terms.", "Only a grid planner.", "Only camera pixels."], correct: 0, note: "Exactly. Inverse dynamics turns desired acceleration into torque." },
+  { q: "When is force control needed?", answers: ["When the robot must regulate contact forces or wrenches.", "Only when no environment exists.", "Only for open-loop trajectories."], correct: 0, note: "Good. Contact tasks often care about force as much as pose." },
+  { q: "What does hybrid motion-force control separate?", answers: ["Motion-controlled and force-controlled directions.", "Chapter numbers from exercises.", "Mass from inertia."], correct: 0, note: "Yes. Constraints decide which directions should move and which should push." },
+  { q: "What is the core idea of impedance control?", answers: ["Specify a dynamic relation between motion error and force.", "Search a graph of cells.", "Count degrees of freedom only."], correct: 0, note: "Correct. Impedance makes contact behavior compliant instead of rigid." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1027,6 +1051,33 @@ const sampleCountLabel = document.querySelector("#sampleCountLabel");
 const samplingReadout = document.querySelector("#samplingReadout");
 const samplingCanvas = document.querySelector("#samplingCanvas");
 const potentialCanvas = document.querySelector("#potentialCanvas");
+const velocityController = document.querySelector("#velocityController");
+const velKp = document.querySelector("#velKp");
+const velKi = document.querySelector("#velKi");
+const velBias = document.querySelector("#velBias");
+const velKpLabel = document.querySelector("#velKpLabel");
+const velKiLabel = document.querySelector("#velKiLabel");
+const velBiasLabel = document.querySelector("#velBiasLabel");
+const velocityReadout = document.querySelector("#velocityReadout");
+const velocityCanvas = document.querySelector("#velocityCanvas");
+const torqueController = document.querySelector("#torqueController");
+const torqueKp = document.querySelector("#torqueKp");
+const torqueKd = document.querySelector("#torqueKd");
+const modelAccuracy = document.querySelector("#modelAccuracy");
+const torqueKpLabel = document.querySelector("#torqueKpLabel");
+const torqueKdLabel = document.querySelector("#torqueKdLabel");
+const modelAccuracyLabel = document.querySelector("#modelAccuracyLabel");
+const torqueReadout = document.querySelector("#torqueReadout");
+const torqueCanvas = document.querySelector("#torqueCanvas");
+const contactMode = document.querySelector("#contactMode");
+const contactStiffness = document.querySelector("#contactStiffness");
+const contactDamping = document.querySelector("#contactDamping");
+const desiredForce = document.querySelector("#desiredForce");
+const contactStiffnessLabel = document.querySelector("#contactStiffnessLabel");
+const contactDampingLabel = document.querySelector("#contactDampingLabel");
+const desiredForceLabel = document.querySelector("#desiredForceLabel");
+const contactReadout = document.querySelector("#contactReadout");
+const contactCanvas = document.querySelector("#contactCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -2914,6 +2965,214 @@ function drawPotentialField() {
   ctx.fillText("goal attracts; obstacle repels", 28, 34);
 }
 
+function renderChapter11Concepts() {
+  const el = document.querySelector("#chapter11Concepts");
+  el.innerHTML = chapter11Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function plotSeries(ctx, series, color, left, right, top, bottom, maxAbs = 1.2) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  series.forEach((v, i) => {
+    const x = left + (i / (series.length - 1)) * (right - left);
+    const y = bottom - ((v + maxAbs) / (2 * maxAbs)) * (bottom - top);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+function drawVelocityControlLab() {
+  const mode = velocityController.value;
+  const kp = Number(velKp.value);
+  const ki = Number(velKi.value);
+  const bias = Number(velBias.value);
+  velKpLabel.textContent = fmt(kp);
+  velKiLabel.textContent = fmt(ki);
+  velBiasLabel.textContent = fmt(bias);
+  const dt = 0.025;
+  const steps = 260;
+  let theta = -0.75;
+  let integral = 0;
+  const target = 0.75;
+  const desiredVelocity = mode === "ffpi" ? 0.18 : 0;
+  const thetaSeries = [];
+  const errorSeries = [];
+  const commandSeries = [];
+  for (let i = 0; i < steps; i += 1) {
+    const t = i * dt;
+    const desired = mode === "ffpi" ? Math.min(target, -0.75 + desiredVelocity * t) : target;
+    const error = desired - theta;
+    integral += error * dt;
+    const integralTerm = mode === "p" ? 0 : ki * integral;
+    const command = desiredVelocity + kp * error + integralTerm;
+    theta += (command - bias) * dt;
+    thetaSeries.push(theta);
+    errorSeries.push(error);
+    commandSeries.push(command);
+  }
+  const finalError = errorSeries[errorSeries.length - 1];
+  velocityReadout.innerHTML = `<strong>${velocityController.options[velocityController.selectedIndex].text}</strong>
+    <p>final error = ${fmt(finalError)}, final command = ${fmt(commandSeries[commandSeries.length - 1])} rad/s.</p>
+    <p>${mode === "p" ? "P velocity feedback gives first-order decay but a constant bias can leave steady-state error." : mode === "pi" ? "PI feedback adds an integral state that can remove constant-bias steady-state error." : "Feedforward moves along the planned trend while PI feedback corrects tracking error."}</p>`;
+  const { ctx, w, h } = setupCanvas(velocityCanvas);
+  grid(ctx, w, h);
+  const left = 48;
+  const right = w - 28;
+  const top = 34;
+  const bottom = h - 44;
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, bottom);
+  ctx.lineTo(right, bottom);
+  ctx.moveTo(left, top);
+  ctx.lineTo(left, bottom);
+  ctx.stroke();
+  plotSeries(ctx, thetaSeries, "#2364aa", left, right, top, bottom);
+  plotSeries(ctx, errorSeries, "#b84a3a", left, right, top, bottom);
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  const targetY = bottom - ((target + 1.2) / 2.4) * (bottom - top);
+  ctx.moveTo(left, targetY);
+  ctx.lineTo(right, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("blue theta, red error, green desired", left + 10, top + 18);
+}
+
+function drawTorqueControlLab() {
+  const mode = torqueController.value;
+  const kp = Number(torqueKp.value);
+  const kd = Number(torqueKd.value);
+  const accuracy = Number(modelAccuracy.value) / 100;
+  torqueKpLabel.textContent = String(kp);
+  torqueKdLabel.textContent = String(kd);
+  modelAccuracyLabel.textContent = `${Math.round(accuracy * 100)}%`;
+  const dt = 0.018;
+  const steps = 320;
+  const mTrue = 1.25;
+  const bTrue = 0.38;
+  const gravity = 0.72;
+  const target = 1;
+  let q = -0.65;
+  let qd = 0;
+  let integral = 0;
+  const qSeries = [];
+  const tauSeries = [];
+  for (let i = 0; i < steps; i += 1) {
+    const e = target - q;
+    const ed = -qd;
+    integral += e * dt;
+    const feedback = kp * e + kd * ed + (mode === "pid" ? 3.4 * integral : 0);
+    const feedforward = mode === "computed" ? accuracy * (gravity + bTrue * qd) : 0;
+    const tau = feedback + feedforward;
+    const qdd = (tau - bTrue * qd - gravity) / mTrue;
+    qd += qdd * dt;
+    q += qd * dt;
+    qSeries.push(q);
+    tauSeries.push(tau / 55);
+  }
+  const finalError = target - qSeries[qSeries.length - 1];
+  const maxTorque = Math.max(...tauSeries.map((v) => Math.abs(v * 55)));
+  torqueReadout.innerHTML = `<strong>${torqueController.options[torqueController.selectedIndex].text}</strong>
+    <p>final error = ${fmt(finalError)}, peak effort about ${fmt(maxTorque)} Nm.</p>
+    <p>${mode === "computed" ? "Computed torque uses a model to cancel known dynamics, so the feedback loop sees a simpler plant." : mode === "pid" ? "PID can reject constant disturbances, but the integral term must be managed to avoid windup." : "PD shapes second-order error dynamics, but gravity or other constant loads can leave offset."}</p>`;
+  const { ctx, w, h } = setupCanvas(torqueCanvas);
+  grid(ctx, w, h);
+  const left = 48;
+  const right = w - 28;
+  const top = 34;
+  const bottom = h - 44;
+  plotSeries(ctx, qSeries, "#2364aa", left, right, top, bottom, 1.25);
+  plotSeries(ctx, tauSeries, "#d39b25", left, right, top, bottom, 1.25);
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  const targetY = bottom - ((target + 1.25) / 2.5) * (bottom - top);
+  ctx.moveTo(left, targetY);
+  ctx.lineTo(right, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("blue q, yellow scaled torque, green target", left + 10, top + 18);
+}
+
+function drawContactControlLab() {
+  const mode = contactMode.value;
+  const stiffness = Number(contactStiffness.value);
+  const damping = Number(contactDamping.value);
+  const force = Number(desiredForce.value);
+  contactStiffnessLabel.textContent = String(stiffness);
+  contactDampingLabel.textContent = String(damping);
+  desiredForceLabel.textContent = String(force);
+  const compression = mode === "force" ? force / Math.max(12, stiffness) : mode === "hybrid" ? force / Math.max(20, stiffness) : (95 - damping) / 120;
+  const normalForce = stiffness * compression;
+  const tangentialMotion = mode === "force" ? 0.1 : mode === "hybrid" ? 0.82 : 0.48;
+  contactReadout.innerHTML = `<strong>${contactMode.options[contactMode.selectedIndex].text}</strong>
+    <p>normal force estimate = ${fmt(normalForce)} N, tangential motion authority = ${fmt(tangentialMotion)}.</p>
+    <p>${mode === "force" ? "Pure force control regulates the constrained direction and gives up precise position there." : mode === "hybrid" ? "Hybrid control pushes normal to the surface while moving freely along the tangent direction." : "Impedance/admittance makes contact compliant by choosing an effective stiffness, damping, and motion-force relation."}</p>`;
+  const { ctx, w, h } = setupCanvas(contactCanvas);
+  grid(ctx, w, h);
+  const wallX = w * 0.68;
+  const baseY = h * 0.58;
+  const toolX = wallX - 42 - compression * 48;
+  ctx.fillStyle = "#16202a";
+  ctx.fillRect(wallX, 42, 18, h - 80);
+  ctx.fillStyle = "rgba(35, 100, 170, 0.16)";
+  ctx.fillRect(wallX + 18, 42, w - wallX - 44, h - 80);
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(80, baseY + 48);
+  ctx.lineTo(toolX - 96, baseY - 16);
+  ctx.lineTo(toolX, baseY);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 3;
+  [80, toolX - 96, toolX].forEach((x, i) => {
+    const y = i === 0 ? baseY + 48 : i === 1 ? baseY - 16 : baseY;
+    ctx.beginPath();
+    ctx.arc(x, y, i === 2 ? 13 : 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(toolX + 12, baseY);
+  ctx.lineTo(wallX - 5, baseY);
+  ctx.stroke();
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.beginPath();
+  ctx.moveTo(wallX - 34, baseY + 68);
+  ctx.lineTo(wallX - 34 + tangentialMotion * 130, baseY + 68);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("red normal force direction", 30, 34);
+  ctx.fillText("green free-motion direction", 30, 54);
+  if (mode === "impedance") {
+    ctx.strokeStyle = "#d39b25";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 7; i += 1) {
+      const x = toolX + 16 + i * 11;
+      ctx.beginPath();
+      ctx.moveTo(x, baseY - 24);
+      ctx.lineTo(x + 6, baseY + 24);
+      ctx.stroke();
+    }
+  }
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -2964,6 +3223,11 @@ function redrawActiveChapter() {
     drawPlannerLab();
     drawSamplingLab();
     drawPotentialField();
+  }
+  if (active === "11") {
+    drawVelocityControlLab();
+    drawTorqueControlLab();
+    drawContactControlLab();
   }
 }
 
@@ -3050,6 +3314,14 @@ const navLinksByChapter = {
     ["Potential", "#chapter10-potential"],
     ["Smoothing", "#chapter10-smoothing"],
     ["Check", "#chapter10-check"]
+  ],
+  "11": [
+    ["Spine", "#chapter11-spine"],
+    ["Error", "#chapter11-error"],
+    ["Torque", "#chapter11-torque"],
+    ["Contact", "#chapter11-contact"],
+    ["Select", "#chapter11-practice"],
+    ["Check", "#chapter11-check"]
   ]
 };
 
@@ -3171,6 +3443,18 @@ trajScaling.addEventListener("change", drawTrajectoryLab);
 plannerMode.addEventListener("change", drawPlannerLab);
 plannerGap.addEventListener("input", drawPlannerLab);
 sampleCount.addEventListener("input", drawSamplingLab);
+[velocityController, velKp, velKi, velBias].forEach((input) => {
+  input.addEventListener("input", drawVelocityControlLab);
+  input.addEventListener("change", drawVelocityControlLab);
+});
+[torqueController, torqueKp, torqueKd, modelAccuracy].forEach((input) => {
+  input.addEventListener("input", drawTorqueControlLab);
+  input.addEventListener("change", drawTorqueControlLab);
+});
+[contactMode, contactStiffness, contactDamping, desiredForce].forEach((input) => {
+  input.addEventListener("input", drawContactControlLab);
+  input.addEventListener("change", drawContactControlLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -3198,5 +3482,7 @@ renderChapter9Concepts();
 renderGenericQuiz("#chapter9Quiz", chapter9QuizItems, "Not quite. Chapter 9 separates path geometry from timing; compare the option to that split.");
 renderChapter10Concepts();
 renderGenericQuiz("#chapter10Quiz", chapter10QuizItems, "Not quite. Chapter 10 is about C-space obstacles, search structures, sampling, potentials, and smoothing.");
+renderChapter11Concepts();
+renderGenericQuiz("#chapter11Quiz", chapter11QuizItems, "Not quite. Chapter 11 asks which signal is controlled, what error dynamics result, and how contact changes the objective.");
 setChapter("1");
 drawArm();

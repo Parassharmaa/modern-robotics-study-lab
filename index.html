@@ -24,6 +24,7 @@
         <button class="chapter-switch" data-target-chapter="8">Chapter 8</button>
         <button class="chapter-switch" data-target-chapter="9">Chapter 9</button>
         <button class="chapter-switch" data-target-chapter="10">Chapter 10</button>
+        <button class="chapter-switch" data-target-chapter="11">Chapter 11</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1478,6 +1479,159 @@
           <p>These checks distinguish grid search, sampling, potential fields, and smoothing.</p>
         </div>
         <div class="quiz" id="chapter10Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="11">
+      <section class="chapter-hero chapter11-hero" id="chapter11" aria-labelledby="chapter11-title">
+        <div>
+          <p class="kicker">Chapter 11</p>
+          <h2 id="chapter11-title">Robot Control</h2>
+          <p>
+            Robot control closes the loop between desired motion and physical effort.
+            Chapter 11 ties together feedback error dynamics, velocity commands,
+            torque commands, force control, hybrid motion-force control, and impedance.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Control pattern</p>
+          <strong>command = feedforward + feedback(error)</strong>
+          <p>
+            Feedforward uses the planned trajectory and model. Feedback reacts to
+            tracking error, disturbances, contact, and model mismatch.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter11-spine" aria-labelledby="chapter11-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter11-spine-title">What Chapter 11 covers</h2>
+          <p>
+            Keep this as the chapter checklist: control-system structure, linear error
+            dynamics, velocity-input control, torque-input control, task-space control,
+            force control, hybrid motion-force control, impedance/admittance, low-level
+            torque loops, and practical limitations.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter11Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter11-error" aria-labelledby="error-control-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 11.2 and 11.3</p>
+          <h2 id="error-control-title">Velocity control shapes error dynamics</h2>
+          <p>
+            A velocity-controlled joint receives a commanded velocity. With pure
+            feedforward, errors can persist. With P or PI feedback, the controller
+            commands velocity from position error and possibly accumulated error.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>controller
+              <select id="velocityController">
+                <option value="p">P velocity feedback</option>
+                <option value="pi">PI velocity feedback</option>
+                <option value="ffpi">Feedforward plus PI</option>
+              </select>
+            </label>
+            <label>Kp <span id="velKpLabel">4.0</span><input id="velKp" type="range" min="1" max="12" step="0.5" value="4"></label>
+            <label>Ki <span id="velKiLabel">1.5</span><input id="velKi" type="range" min="0" max="8" step="0.5" value="1.5"></label>
+            <label>load bias <span id="velBiasLabel">0.25</span><input id="velBias" type="range" min="-1" max="1" step="0.05" value="0.25"></label>
+            <div class="matrix-readout" id="velocityReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="velocityCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter11-torque" aria-labelledby="torque-control-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 11.4</p>
+          <h2 id="torque-control-title">Torque control combines feedback with dynamics</h2>
+          <p>
+            Torque-input robots let the controller request effort directly. PD and PID
+            shape second- and third-order error dynamics; computed torque adds inverse
+            dynamics so each joint behaves more like a simple decoupled system.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>controller
+              <select id="torqueController">
+                <option value="pd">PD torque feedback</option>
+                <option value="pid">PID torque feedback</option>
+                <option value="computed">Computed torque</option>
+              </select>
+            </label>
+            <label>Kp <span id="torqueKpLabel">28</span><input id="torqueKp" type="range" min="6" max="70" value="28"></label>
+            <label>Kd <span id="torqueKdLabel">9</span><input id="torqueKd" type="range" min="0" max="26" value="9"></label>
+            <label>model accuracy <span id="modelAccuracyLabel">80%</span><input id="modelAccuracy" type="range" min="40" max="100" value="80"></label>
+            <div class="matrix-readout" id="torqueReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="torqueCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter11-contact" aria-labelledby="contact-control-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 11.5 through 11.8</p>
+          <h2 id="contact-control-title">Contact control chooses what to move and what to yield</h2>
+          <p>
+            In contact, pure position control can fight the environment. Force control
+            regulates wrench components; hybrid control separates constrained force
+            directions from free motion directions; impedance and admittance specify
+            how motion and force should relate.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>contact mode
+              <select id="contactMode">
+                <option value="force">Pure force control</option>
+                <option value="hybrid">Hybrid motion-force</option>
+                <option value="impedance">Impedance / admittance</option>
+              </select>
+            </label>
+            <label>stiffness <span id="contactStiffnessLabel">55</span><input id="contactStiffness" type="range" min="10" max="95" value="55"></label>
+            <label>damping <span id="contactDampingLabel">42</span><input id="contactDamping" type="range" min="0" max="90" value="42"></label>
+            <label>desired force <span id="desiredForceLabel">35</span><input id="desiredForce" type="range" min="5" max="80" value="35"></label>
+            <div class="matrix-readout" id="contactReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="contactCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter11-practice" aria-labelledby="control-practice-title">
+        <div class="section-head">
+          <p class="eyebrow">Controller selection</p>
+          <h2 id="control-practice-title">Which controller belongs where?</h2>
+          <p>
+            Chapter 11 is less about memorizing acronyms and more about matching the
+            controller to the plant input, the model quality, and the task constraint.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Velocity input</h3><p>Use P, PI, or feedforward plus PI when the low-level hardware accepts velocity commands and tracks them internally.</p></article>
+          <article class="task-card"><h3>Torque input</h3><p>Use PID, gravity compensation, inverse dynamics, or computed torque when the robot exposes joint effort commands.</p></article>
+          <article class="task-card"><h3>Task-space motion</h3><p>Use twists, Jacobians, and adjoint transforms to regulate the end-effector pose rather than only joint angles.</p></article>
+          <article class="task-card"><h3>Contact-rich tasks</h3><p>Use force, hybrid, impedance, or admittance control when the environment imposes constraints or desired interaction forces.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter11-check" aria-labelledby="chapter11-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter11-quiz-title">Chapter 11 checkpoint</h2>
+          <p>These checks separate feedforward, feedback, velocity control, torque control, force control, and impedance.</p>
+        </div>
+        <div class="quiz" id="chapter11Quiz"></div>
       </section>
       </div>
     </main>
