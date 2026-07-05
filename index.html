@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Modern Robotics Study Lab</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Modern Robotics study path</p>
+        <h1>Modern Robotics Study Lab</h1>
+      </div>
+      <div class="chapter-switcher" role="group" aria-label="Chapter switcher">
+        <button class="chapter-switch active" data-target-chapter="1">Chapter 1</button>
+        <button class="chapter-switch" data-target-chapter="2">Chapter 2</button>
+      </div>
+      <nav aria-label="Study navigation">
+        <a href="#map">Roadmap</a>
+        <a href="#mechanism">Mechanisms</a>
+        <a href="#spaces">Spaces</a>
+        <a href="#quiz">Check</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="chapter-view active" data-chapter-view="1">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="kicker">Reference: Lynch and Park, Modern Robotics, May 2017 preprint, Chapter 1.</p>
+          <h2 id="hero-title">Before equations, learn the shape of the subject.</h2>
+          <p>
+            Chapter 1 does not teach one isolated technique. It gives the mental map:
+            robots are rigid bodies connected by joints, driven by actuators, measured
+            by sensors, planned through configuration space, and controlled through
+            forces, torques, velocities, and feedback.
+          </p>
+        </div>
+        <div class="robot-stage" aria-label="Interactive robot arm preview">
+          <svg id="armSvg" viewBox="0 0 520 340" role="img" aria-label="Two joint planar robot arm">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z"></path>
+              </marker>
+            </defs>
+            <rect class="floor" x="30" y="288" width="460" height="14"></rect>
+            <circle class="workspace-ring" cx="180" cy="260" r="150"></circle>
+            <circle class="workspace-ring inner" cx="180" cy="260" r="45"></circle>
+            <g id="armGroup"></g>
+            <g class="target">
+              <circle cx="390" cy="120" r="14"></circle>
+              <path d="M390 94v52M364 120h52"></path>
+            </g>
+          </svg>
+          <div class="joint-panel">
+            <label>Joint 1 <span id="angleOneLabel">38 deg</span><input id="angleOne" type="range" min="-110" max="145" value="38"></label>
+            <label>Joint 2 <span id="angleTwoLabel">-48 deg</span><input id="angleTwo" type="range" min="-150" max="150" value="-48"></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="map" aria-labelledby="map-title">
+        <div class="section-head">
+          <p class="eyebrow">The book in one navigable picture</p>
+          <h2 id="map-title">Chapter roadmap</h2>
+          <p>
+            Chapter 1 previews every major block. Select a chapter to see the question it answers,
+            the core object it studies, and the reason it matters later.
+          </p>
+        </div>
+        <div class="roadmap-layout">
+          <div class="chapter-grid" id="chapterGrid" aria-label="Chapter selector"></div>
+          <article class="detail-panel" id="chapterDetail" aria-live="polite"></article>
+        </div>
+      </section>
+
+      <section class="band split" id="mechanism" aria-labelledby="mechanism-title">
+        <div>
+          <p class="eyebrow">What is a robot mechanism?</p>
+          <h2 id="mechanism-title">Links, joints, actuators, sensors</h2>
+          <p>
+            The book starts with a deliberately mechanical view. A robot mechanism is a set of
+            rigid links connected by joints. Actuators create motion and forces at those joints;
+            sensors report joint motion, forces, torques, or the surrounding scene.
+          </p>
+          <div class="mode-switch" role="group" aria-label="Mechanism type">
+            <button class="mode active" data-mechanism="open">Open chain</button>
+            <button class="mode" data-mechanism="closed">Closed chain</button>
+          </div>
+          <div id="mechanismText" class="explain-block"></div>
+        </div>
+        <div class="mechanism-diagram">
+          <svg id="mechanismSvg" viewBox="0 0 520 360" role="img" aria-label="Mechanism diagram"></svg>
+        </div>
+      </section>
+
+      <section class="band" id="spaces" aria-labelledby="spaces-title">
+        <div class="section-head">
+          <p class="eyebrow">The vocabulary Chapter 1 seeds</p>
+          <h2 id="spaces-title">Configuration space, task space, workspace</h2>
+          <p>
+            Move the joint sliders. The left plot is a point in configuration space:
+            one coordinate for each joint. The right plot is the end-effector location
+            produced by those coordinates. This is why forward kinematics is easy to ask,
+            while inverse kinematics is trickier.
+          </p>
+        </div>
+        <div class="space-lab">
+          <div class="plot">
+            <h3>Configuration space</h3>
+            <canvas id="configCanvas" width="420" height="300"></canvas>
+            <p id="configReadout"></p>
+          </div>
+          <div class="plot">
+            <h3>Task/workspace view</h3>
+            <canvas id="taskCanvas" width="420" height="300"></canvas>
+            <p id="taskReadout"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" aria-labelledby="pipeline-title">
+        <div>
+          <p class="eyebrow">The recurring robotics loop</p>
+          <h2 id="pipeline-title">From task to torques</h2>
+          <p>
+            Most of the book can be read as one pipeline. Represent where the robot can be,
+            compute where the hand goes, invert that relationship when needed, choose a path,
+            assign timing, then control the actuators while using feedback.
+          </p>
+        </div>
+        <div class="pipeline" id="pipeline"></div>
+      </section>
+
+      <section class="band" id="quiz" aria-labelledby="quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="quiz-title">Chapter 1 checkpoint</h2>
+          <p>Answer these before moving to Chapter 2. They test the map, not formulas.</p>
+        </div>
+        <div class="quiz" id="quizBox"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="2">
+      <section class="chapter-hero" id="chapter2" aria-labelledby="chapter2-title">
+        <div>
+          <p class="kicker">Chapter 2</p>
+          <h2 id="chapter2-title">Configuration Space</h2>
+          <p>
+            Chapter 2 answers the most basic robotics question: where is the robot?
+            The answer is not usually a drawing in ordinary 3D space. It is a point in
+            configuration space, whose dimension is the robot's degrees of freedom and
+            whose shape can wrap, bend, or be cut by constraints.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Core count</p>
+          <strong>dof = m(N - 1 - J) + sum fi</strong>
+          <p>
+            Use this when the mechanism has independent joint constraints.
+            For closed chains, treat the result as a lower bound if constraints are
+            dependent or special geometry creates extra motion.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter2-spine" aria-labelledby="chapter2-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Full chapter spine</p>
+          <h2 id="chapter2-spine-title">What Chapter 2 covers</h2>
+          <p>
+            Keep this as the detailed checklist. The interactives below are built around
+            these exact ideas: dimension, joint constraints, topology, representation,
+            holonomic and nonholonomic constraints, task space, and workspace.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter2Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter2-dof" aria-labelledby="dof-title">
+        <div class="section-head">
+          <p class="eyebrow">Definition 2.1, made tactile</p>
+          <h2 id="dof-title">Configuration and degrees of freedom</h2>
+          <p>
+            A configuration is a complete specification of every point of the robot.
+            Degrees of freedom are the fewest real-valued coordinates needed to do that.
+            Choose an example and watch which coordinates are enough.
+          </p>
+        </div>
+        <div class="dof-lab">
+          <div class="control-panel">
+            <label>
+              Example
+              <select id="dofExample">
+                <option value="door">Door on a hinge</option>
+                <option value="point">Point in a plane</option>
+                <option value="coin">Coin on a table</option>
+                <option value="planar">Free planar rigid body</option>
+                <option value="spatial">Free spatial rigid body</option>
+              </select>
+            </label>
+            <div id="dofReadout" class="number-readout"></div>
+            <div id="dofChips" class="chips"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="dofCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter2-joints" aria-labelledby="joint-title">
+        <div>
+          <p class="eyebrow">Joint freedoms as constraints</p>
+          <h2 id="joint-title">Joints remove motion</h2>
+          <p>
+            A joint can be read two ways. It grants relative motion between two links,
+            and it also imposes constraints. In space, a revolute joint grants one
+            freedom and removes five; in the plane, it removes two.
+          </p>
+        </div>
+        <div class="joint-table-wrap">
+          <table class="joint-table">
+            <thead>
+              <tr><th>Joint</th><th>Freedom fi</th><th>Planar constraints</th><th>Spatial constraints</th></tr>
+            </thead>
+            <tbody id="jointTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="band" id="chapter2-grubler" aria-labelledby="grubler-title">
+        <div class="section-head">
+          <p class="eyebrow">Mechanism mobility</p>
+          <h2 id="grubler-title">Grubler calculator</h2>
+          <p>
+            Count links including ground, count joints, choose planar or spatial motion,
+            then add the freedoms provided by each joint. Try the presets first, then
+            perturb the numbers to feel what the formula is doing.
+          </p>
+        </div>
+        <div class="calc-grid">
+          <div class="control-panel">
+            <div class="preset-row">
+              <button class="preset" data-preset="fourbar">Four-bar</button>
+              <button class="preset" data-preset="slider">Slider-crank</button>
+              <button class="preset" data-preset="serial3r">Planar 3R</button>
+              <button class="preset" data-preset="fivebar">Five-bar</button>
+              <button class="preset" data-preset="sixbar">Six-bar</button>
+              <button class="preset" data-preset="overlap">Overlapping joints</button>
+              <button class="preset" data-preset="parallel">Parallelogram warning</button>
+              <button class="preset" data-preset="delta">Delta robot</button>
+              <button class="preset" data-preset="stewart">Stewart-Gough</button>
+            </div>
+            <label>World
+              <select id="grublerM">
+                <option value="3">Planar rigid bodies, m = 3</option>
+                <option value="6">Spatial rigid bodies, m = 6</option>
+              </select>
+            </label>
+            <label>Links including ground <input id="grublerN" type="number" min="1" value="4"></label>
+            <label>Joint freedoms, comma-separated <input id="grublerF" type="text" value="1,1,1,1"></label>
+          </div>
+          <div class="formula-panel">
+            <p class="eyebrow">Live result</p>
+            <strong id="grublerResult">1 dof</strong>
+            <p id="grublerSteps"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter2-topology" aria-labelledby="topology-title">
+        <div class="section-head">
+          <p class="eyebrow">Dimension is not shape</p>
+          <h2 id="topology-title">Topology explorer</h2>
+          <p>
+            A line, a circle, a sphere, a cylinder, and a torus can have related
+            coordinate counts but different wrapping behavior. Coordinate choices are
+            representations; topology is the underlying shape of the space.
+          </p>
+        </div>
+        <div class="topology-lab">
+          <div class="control-panel">
+            <label>Space
+              <select id="topologySelect">
+                <option value="line">R1: line</option>
+                <option value="circle">S1: circle</option>
+                <option value="sphere">S2: sphere surface</option>
+                <option value="cylinder">R1 x S1: cylinder</option>
+                <option value="torus">S1 x S1: torus</option>
+              </select>
+            </label>
+            <div id="topologyText" class="explain-block"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="topologyCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter2-constraints" aria-labelledby="constraints-title">
+        <div>
+          <p class="eyebrow">Constraints</p>
+          <h2 id="constraints-title">Holonomic cuts space; nonholonomic limits velocity</h2>
+          <p>
+            Loop-closure constraints such as g(q) = 0 reduce the dimension of the
+            configuration space. Rolling without slipping gives velocity constraints
+            A(q)qdot = 0 that restrict instantaneous motion without reducing the set
+            of reachable configurations.
+          </p>
+          <div class="mode-switch" role="group" aria-label="Constraint type">
+            <button class="constraint-mode active" data-constraint="holonomic">Holonomic</button>
+            <button class="constraint-mode" data-constraint="nonholonomic">Nonholonomic</button>
+          </div>
+          <div id="constraintText" class="explain-block"></div>
+        </div>
+        <div class="visual-panel">
+          <canvas id="constraintCanvas" width="620" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="band" id="chapter2-task" aria-labelledby="task-title">
+        <div class="section-head">
+          <p class="eyebrow">End-effector spaces</p>
+          <h2 id="task-title">Task space versus workspace</h2>
+          <p>
+            Task space is chosen from the job. Workspace is what the robot can reach.
+            They are related to the end-effector, not the full robot configuration.
+          </p>
+        </div>
+        <div class="task-cards" id="taskCards"></div>
+      </section>
+
+      <section class="band" id="chapter2-check" aria-labelledby="chapter2-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter2-quiz-title">Chapter 2 checkpoint</h2>
+          <p>These are the questions to own before Chapter 3 starts using matrices.</p>
+        </div>
+        <div class="quiz" id="chapter2Quiz"></div>
+      </section>
+      </div>
+    </main>
+
+    <footer>
+      <p>
+        Built as a local study companion for the publicly linked Modern Robotics preprint.
+        Source PDF saved at <code>source/modern_robotics.pdf</code>.
+      </p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
