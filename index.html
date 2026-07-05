@@ -25,6 +25,7 @@
         <button class="chapter-switch" data-target-chapter="9">Chapter 9</button>
         <button class="chapter-switch" data-target-chapter="10">Chapter 10</button>
         <button class="chapter-switch" data-target-chapter="11">Chapter 11</button>
+        <button class="chapter-switch" data-target-chapter="12">Chapter 12</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1632,6 +1633,150 @@
           <p>These checks separate feedforward, feedback, velocity control, torque control, force control, and impedance.</p>
         </div>
         <div class="quiz" id="chapter11Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="12">
+      <section class="chapter-hero chapter12-hero" id="chapter12" aria-labelledby="chapter12-title">
+        <div>
+          <p class="kicker">Chapter 12</p>
+          <h2 id="chapter12-title">Grasping and Manipulation</h2>
+          <p>
+            Chapter 12 moves the focus from the robot alone to the object being
+            manipulated. Contacts constrain object twists, friction limits contact
+            forces, and good grasps use those constraints to immobilize, support,
+            push, roll, or carry objects.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Contact duality</p>
+          <strong>feasible motion and feasible wrench are dual pictures</strong>
+          <p>
+            Contact normals cut away object motions. Contact forces and friction
+            cones describe which external wrenches the grasp can resist.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter12-spine" aria-labelledby="chapter12-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter12-spine-title">What Chapter 12 covers</h2>
+          <p>
+            The chapter builds from first-order contact kinematics to friction
+            cones, form closure, force closure, motion-force duality, and
+            manipulation strategies such as grasping, pushing, rolling, and fixturing.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter12Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter12-kinematics" aria-labelledby="contact-kinematics-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 12.1</p>
+          <h2 id="contact-kinematics-title">Contact kinematics classifies motion at the contact</h2>
+          <p>
+            At first order, a contact normal defines an impenetrability constraint.
+            The object can break contact, slide along the tangent, or roll/stick with
+            no relative velocity at the contact point.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>object twist
+              <select id="contactTwistMode">
+                <option value="rolling">Rolling / sticking</option>
+                <option value="sliding">Sliding</option>
+                <option value="breaking">Breaking free</option>
+                <option value="penetrating">Penetrating attempt</option>
+              </select>
+            </label>
+            <label>normal velocity <span id="normalVelocityLabel">0.00</span><input id="normalVelocity" type="range" min="-1" max="1" step="0.05" value="0"></label>
+            <label>tangent velocity <span id="tangentVelocityLabel">0.00</span><input id="tangentVelocity" type="range" min="-1" max="1" step="0.05" value="0"></label>
+            <div class="matrix-readout" id="contactKinematicsReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="contactKinematicsCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter12-friction" aria-labelledby="friction-cone-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 12.2</p>
+          <h2 id="friction-cone-title">Friction cones bound the contact force</h2>
+          <p>
+            Coulomb friction says the tangential force cannot exceed mu times the
+            normal force. In planar problems this creates a two-edge cone that can
+            be converted into wrench rays about the object.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>friction coefficient mu <span id="frictionMuLabel">0.55</span><input id="frictionMu" type="range" min="0.05" max="1.2" step="0.05" value="0.55"></label>
+            <label>normal force <span id="normalForceLabel">45</span><input id="normalForce" type="range" min="10" max="90" value="45"></label>
+            <label>contact location <span id="contactOffsetLabel">0.35</span><input id="contactOffset" type="range" min="-0.8" max="0.8" step="0.05" value="0.35"></label>
+            <div class="matrix-readout" id="frictionReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="frictionCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter12-closure" aria-labelledby="closure-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 12.1.7 and 12.2.3</p>
+          <h2 id="closure-title">Closure asks whether contacts can immobilize or resist</h2>
+          <p>
+            Form closure is about whether contact normals eliminate all object twists.
+            Force closure is about whether available contact wrenches positively span
+            the wrench space around the origin.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>grasp layout
+              <select id="graspLayout">
+                <option value="two">Two opposite contacts</option>
+                <option value="three">Three frictional contacts</option>
+                <option value="four">Four form-closure contacts</option>
+              </select>
+            </label>
+            <label>spread <span id="graspSpreadLabel">68</span><input id="graspSpread" type="range" min="30" max="110" value="68"></label>
+            <div class="matrix-readout" id="closureReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="closureCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter12-manipulation" aria-labelledby="manipulation-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 12.3</p>
+          <h2 id="manipulation-title">Manipulation chooses useful contact modes</h2>
+          <p>
+            A manipulation plan is often a sequence of contact modes: grasp, push,
+            roll, slide, release, or fixture. The right model depends on whether the
+            object motion or contact force is the active constraint.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Grasping</h3><p>Use contacts to hold the object against disturbance wrenches while the arm moves it.</p></article>
+          <article class="task-card"><h3>Fixturing</h3><p>Use stationary contacts to remove object freedoms during assembly, inspection, or machining.</p></article>
+          <article class="task-card"><h3>Pushing and sliding</h3><p>Exploit frictional contact to move an object without fully enclosing it.</p></article>
+          <article class="task-card"><h3>Rolling and regrasping</h3><p>Change contact modes deliberately when the current grasp cannot produce the next desired motion.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter12-check" aria-labelledby="chapter12-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter12-quiz-title">Chapter 12 checkpoint</h2>
+          <p>These checks separate contact kinematics, friction cones, form closure, force closure, and manipulation planning.</p>
+        </div>
+        <div class="quiz" id="chapter12Quiz"></div>
       </section>
       </div>
     </main>

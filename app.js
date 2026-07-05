@@ -888,6 +888,30 @@ const chapter11QuizItems = [
   { q: "What is the core idea of impedance control?", answers: ["Specify a dynamic relation between motion error and force.", "Search a graph of cells.", "Count degrees of freedom only."], correct: 0, note: "Correct. Impedance makes contact behavior compliant instead of rigid." }
 ];
 
+const chapter12Concepts = [
+  { title: "Manipulation viewpoint", text: "The object being moved is the main system; the robot is one source of contact constraints and forces." },
+  { title: "Contact normal", text: "A point contact defines a tangent plane and a normal direction that prevents interpenetration." },
+  { title: "First-order contact kinematics", text: "The normal relative velocity determines whether contact is maintained, breaking, or trying to penetrate." },
+  { title: "Rolling and sticking", text: "Rolling contact has no relative velocity at the contact point, so both normal and tangential relative velocities vanish." },
+  { title: "Sliding", text: "Sliding maintains normal contact while allowing tangential relative motion." },
+  { title: "Multiple contacts", text: "Each contact adds a half-space constraint; their intersection is the feasible twist set." },
+  { title: "Planar graphical methods", text: "Planar twists can be visualized with centers of rotation and contact labels." },
+  { title: "Form closure", text: "A body is in first-order form closure when the only twist satisfying all contact constraints is zero." },
+  { title: "Coulomb friction", text: "Tangential force is limited by mu times the normal force, creating a friction cone." },
+  { title: "Wrench cones", text: "A contact force at a point creates a wrench; friction-cone edges become rays in wrench space." },
+  { title: "Force closure", text: "A grasp has force closure when available contact wrenches can resist arbitrary disturbance wrenches." },
+  { title: "Manipulation planning", text: "Tasks combine contact modes: grasping, fixturing, pushing, sliding, rolling, releasing, and regrasping." }
+];
+
+const chapter12QuizItems = [
+  { q: "What does a contact normal constraint prevent?", answers: ["Interpenetration of the two bodies.", "All tangential motion.", "Every external wrench."], correct: 0, note: "Yes. The normal direction is the first-order impenetrability constraint." },
+  { q: "How does sliding differ from rolling at a point contact?", answers: ["Sliding has tangential relative motion; rolling has none at the contact point.", "Sliding requires no contact normal.", "Rolling always means breaking free."], correct: 0, note: "Right. Both can maintain contact, but only rolling/sticking removes tangential relative velocity." },
+  { q: "What is form closure about?", answers: ["Contacts immobilizing the object kinematically.", "A controller eliminating velocity error.", "A grid planner finding a path."], correct: 0, note: "Correct. Form closure is a motion constraint property." },
+  { q: "What does a friction cone describe?", answers: ["The set of contact force directions allowed by Coulomb friction.", "The set of robot joint angles.", "Only the object center of mass."], correct: 0, note: "Exactly. Larger mu gives a wider cone." },
+  { q: "What is force closure about?", answers: ["Available contact wrenches resisting arbitrary disturbance wrenches.", "The number of links in a chain.", "Only rolling without friction."], correct: 0, note: "Yes. Force closure is a wrench-space property." },
+  { q: "Why does manipulation planning track contact modes?", answers: ["Because grasping, pushing, sliding, rolling, and breaking contact obey different constraints.", "Because all contacts are equivalent.", "Because friction is never relevant."], correct: 0, note: "Good. The active contact mode changes the feasible motion and force model." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1078,6 +1102,26 @@ const contactDampingLabel = document.querySelector("#contactDampingLabel");
 const desiredForceLabel = document.querySelector("#desiredForceLabel");
 const contactReadout = document.querySelector("#contactReadout");
 const contactCanvas = document.querySelector("#contactCanvas");
+const contactTwistMode = document.querySelector("#contactTwistMode");
+const normalVelocity = document.querySelector("#normalVelocity");
+const tangentVelocity = document.querySelector("#tangentVelocity");
+const normalVelocityLabel = document.querySelector("#normalVelocityLabel");
+const tangentVelocityLabel = document.querySelector("#tangentVelocityLabel");
+const contactKinematicsReadout = document.querySelector("#contactKinematicsReadout");
+const contactKinematicsCanvas = document.querySelector("#contactKinematicsCanvas");
+const frictionMu = document.querySelector("#frictionMu");
+const normalForce = document.querySelector("#normalForce");
+const contactOffset = document.querySelector("#contactOffset");
+const frictionMuLabel = document.querySelector("#frictionMuLabel");
+const normalForceLabel = document.querySelector("#normalForceLabel");
+const contactOffsetLabel = document.querySelector("#contactOffsetLabel");
+const frictionReadout = document.querySelector("#frictionReadout");
+const frictionCanvas = document.querySelector("#frictionCanvas");
+const graspLayout = document.querySelector("#graspLayout");
+const graspSpread = document.querySelector("#graspSpread");
+const graspSpreadLabel = document.querySelector("#graspSpreadLabel");
+const closureReadout = document.querySelector("#closureReadout");
+const closureCanvas = document.querySelector("#closureCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -3173,6 +3217,193 @@ function drawContactControlLab() {
   }
 }
 
+function renderChapter12Concepts() {
+  const el = document.querySelector("#chapter12Concepts");
+  el.innerHTML = chapter12Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function drawArrow(ctx, from, to, color = "#2364aa", width = 3) {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(to.x - 11 * Math.cos(angle - 0.45), to.y - 11 * Math.sin(angle - 0.45));
+  ctx.lineTo(to.x - 11 * Math.cos(angle + 0.45), to.y - 11 * Math.sin(angle + 0.45));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawContactKinematicsLab() {
+  const mode = contactTwistMode.value;
+  const vn = Number(normalVelocity.value);
+  const vt = Number(tangentVelocity.value);
+  normalVelocityLabel.textContent = fmt(vn);
+  tangentVelocityLabel.textContent = fmt(vt);
+  let label = "rolling / sticking";
+  let note = "The contact is maintained and the relative contact-point velocity is zero.";
+  if (vn > 0.05) {
+    label = "breaking free";
+    note = "Positive normal separation means the contact can open.";
+  } else if (vn < -0.05) {
+    label = "penetrating attempt";
+    note = "Negative normal velocity violates impenetrability, so a feasible motion or force must prevent it.";
+  } else if (Math.abs(vt) > 0.05) {
+    label = "sliding";
+    note = "Normal contact is maintained, but tangential relative velocity is nonzero.";
+  }
+  contactKinematicsReadout.innerHTML = `<strong>${label}</strong>
+    <p>relative velocity = ${fmt(vn)} n + ${fmt(vt)} t.</p>
+    <p>${note}</p>`;
+  const { ctx, w, h } = setupCanvas(contactKinematicsCanvas);
+  grid(ctx, w, h);
+  const tableY = h * 0.64;
+  const block = { x: w * 0.44 + vt * 52, y: tableY - 78 - Math.max(0, vn) * 48 };
+  ctx.fillStyle = "#16202a";
+  ctx.fillRect(70, tableY + 28, w - 140, 14);
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.roundRect(block.x - 70, block.y - 45, 140, 90, 8);
+  ctx.fill();
+  ctx.stroke();
+  const contact = { x: block.x, y: block.y + 45 };
+  drawArrow(ctx, contact, { x: contact.x, y: contact.y - 72 }, "#b84a3a", 4);
+  drawArrow(ctx, contact, { x: contact.x + 72, y: contact.y }, "#2a8c6d", 4);
+  drawArrow(ctx, contact, { x: contact.x + vt * 90, y: contact.y - vn * 90 }, "#d39b25", 5);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("red normal n, green tangent t, yellow relative contact velocity", 28, 34);
+}
+
+function drawFrictionConeLab() {
+  const mu = Number(frictionMu.value);
+  const fn = Number(normalForce.value);
+  const offset = Number(contactOffset.value);
+  frictionMuLabel.textContent = fmt(mu);
+  normalForceLabel.textContent = String(fn);
+  contactOffsetLabel.textContent = fmt(offset);
+  const alpha = Math.atan(mu);
+  const ftMax = mu * fn;
+  const momentEdge = offset * ftMax;
+  frictionReadout.innerHTML = `<strong>friction angle = ${fmt((alpha * 180) / Math.PI)} deg</strong>
+    <p>|ft| <= mu fn = ${fmt(ftMax)} N, so the contact force must stay inside the cone.</p>
+    <p>At this planar contact offset, the cone edges create moment magnitudes near ${fmt(Math.abs(momentEdge))} in wrench space.</p>`;
+  const { ctx, w, h } = setupCanvas(frictionCanvas);
+  grid(ctx, w, h);
+  const origin = { x: w * 0.33, y: h * 0.68 };
+  const coneH = 150;
+  const coneW = Math.tan(alpha) * coneH;
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(origin.x - 95, origin.y);
+  ctx.lineTo(origin.x + 95, origin.y);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(211, 155, 37, 0.18)";
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(origin.x - coneW, origin.y - coneH);
+  ctx.lineTo(origin.x + coneW, origin.y - coneH);
+  ctx.closePath();
+  ctx.fill();
+  drawArrow(ctx, origin, { x: origin.x, y: origin.y - coneH * 0.92 }, "#2364aa", 4);
+  drawArrow(ctx, origin, { x: origin.x + coneW * 0.82, y: origin.y - coneH * 0.82 }, "#b84a3a", 4);
+  ctx.fillStyle = "#16202a";
+  ctx.fillText("friction cone", origin.x - 42, origin.y - coneH - 10);
+  const wx = w * 0.66;
+  const wy = h * 0.54;
+  ctx.strokeStyle = "#d6dee6";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(wx - 120, wy);
+  ctx.lineTo(wx + 120, wy);
+  ctx.moveTo(wx, wy + 100);
+  ctx.lineTo(wx, wy - 120);
+  ctx.stroke();
+  const rays = [
+    { x: wx + momentEdge * 2.2, y: wy - fn * 1.15 },
+    { x: wx - momentEdge * 2.2, y: wy - fn * 1.15 }
+  ];
+  drawArrow(ctx, { x: wx, y: wy }, rays[0], "#2a8c6d", 4);
+  drawArrow(ctx, { x: wx, y: wy }, rays[1], "#2a8c6d", 4);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("right: planar wrench-cone edge sketch", wx - 110, wy + 124);
+}
+
+function closureContacts(layout, spread) {
+  if (layout === "two") {
+    return [
+      { a: Math.PI, p: { x: -100, y: 0 } },
+      { a: 0, p: { x: 100, y: 0 } }
+    ];
+  }
+  if (layout === "three") {
+    return [210, -30, 90].map((deg) => ({ a: degToRad(deg), p: { x: Math.cos(degToRad(deg)) * spread, y: Math.sin(degToRad(deg)) * spread } }));
+  }
+  return [45, 135, 225, 315].map((deg) => ({ a: degToRad(deg), p: { x: Math.cos(degToRad(deg)) * spread, y: Math.sin(degToRad(deg)) * spread } }));
+}
+
+function drawClosureLab() {
+  const layout = graspLayout.value;
+  const spread = Number(graspSpread.value);
+  graspSpreadLabel.textContent = String(spread);
+  const contacts = closureContacts(layout, spread);
+  const rank = layout === "two" ? 2 : 3;
+  const status = layout === "four" ? "first-order form closure likely" : layout === "three" ? "force closure depends on friction and force limits" : "not form closure";
+  closureReadout.innerHTML = `<strong>${status}</strong>
+    <p>contacts = ${contacts.length}, planar wrench rank sketch = ${rank} of 3.</p>
+    <p>${layout === "two" ? "Two opposite frictionless normals cannot resist every planar twist or wrench." : layout === "three" ? "Three frictional contacts can span richer wrench cones, but quality depends on cone width and geometry." : "Four well-placed point contacts are the classic planar first-order form-closure count."}</p>`;
+  const { ctx, w, h } = setupCanvas(closureCanvas);
+  grid(ctx, w, h);
+  const c = { x: w * 0.36, y: h * 0.54 };
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.roundRect(c.x - 82, c.y - 58, 164, 116, 12);
+  ctx.fill();
+  ctx.stroke();
+  contacts.forEach((contact, i) => {
+    const p = { x: c.x + contact.p.x, y: c.y - contact.p.y };
+    const inward = { x: p.x - Math.cos(contact.a) * 58, y: p.y + Math.sin(contact.a) * 58 };
+    ctx.fillStyle = ["#2364aa", "#2a8c6d", "#d39b25", "#b84a3a"][i % 4];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    drawArrow(ctx, p, inward, ctx.fillStyle, 4);
+  });
+  const wx = w * 0.72;
+  const wy = h * 0.55;
+  ctx.strokeStyle = "#d6dee6";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(wx, wy, 86, 0, Math.PI * 2);
+  ctx.moveTo(wx - 104, wy);
+  ctx.lineTo(wx + 104, wy);
+  ctx.moveTo(wx, wy - 104);
+  ctx.lineTo(wx, wy + 104);
+  ctx.stroke();
+  contacts.forEach((contact, i) => {
+    const len = layout === "two" ? 64 : layout === "three" ? 78 : 90;
+    const angle = contact.a + Math.PI;
+    drawArrow(ctx, { x: wx, y: wy }, { x: wx + Math.cos(angle) * len, y: wy - Math.sin(angle) * len }, ["#2364aa", "#2a8c6d", "#d39b25", "#b84a3a"][i % 4], 3);
+  });
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("object contacts", c.x - 54, 34);
+  ctx.fillText("wrench direction sketch", wx - 76, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -3229,6 +3460,24 @@ function redrawActiveChapter() {
     drawTorqueControlLab();
     drawContactControlLab();
   }
+  if (active === "12") {
+    drawContactKinematicsLab();
+    drawFrictionConeLab();
+    drawClosureLab();
+  }
+}
+
+function applyContactTwistPreset() {
+  const presets = {
+    rolling: { n: 0, t: 0 },
+    sliding: { n: 0, t: 0.75 },
+    breaking: { n: 0.62, t: 0.25 },
+    penetrating: { n: -0.55, t: -0.25 }
+  };
+  const preset = presets[contactTwistMode.value];
+  normalVelocity.value = String(preset.n);
+  tangentVelocity.value = String(preset.t);
+  drawContactKinematicsLab();
 }
 
 const navLinksByChapter = {
@@ -3322,6 +3571,14 @@ const navLinksByChapter = {
     ["Contact", "#chapter11-contact"],
     ["Select", "#chapter11-practice"],
     ["Check", "#chapter11-check"]
+  ],
+  "12": [
+    ["Spine", "#chapter12-spine"],
+    ["Kinematics", "#chapter12-kinematics"],
+    ["Friction", "#chapter12-friction"],
+    ["Closure", "#chapter12-closure"],
+    ["Manipulate", "#chapter12-manipulation"],
+    ["Check", "#chapter12-check"]
   ]
 };
 
@@ -3455,6 +3712,17 @@ sampleCount.addEventListener("input", drawSamplingLab);
   input.addEventListener("input", drawContactControlLab);
   input.addEventListener("change", drawContactControlLab);
 });
+contactTwistMode.addEventListener("change", applyContactTwistPreset);
+[normalVelocity, tangentVelocity].forEach((input) => {
+  input.addEventListener("input", drawContactKinematicsLab);
+});
+[frictionMu, normalForce, contactOffset].forEach((input) => {
+  input.addEventListener("input", drawFrictionConeLab);
+});
+[graspLayout, graspSpread].forEach((input) => {
+  input.addEventListener("input", drawClosureLab);
+  input.addEventListener("change", drawClosureLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -3484,5 +3752,7 @@ renderChapter10Concepts();
 renderGenericQuiz("#chapter10Quiz", chapter10QuizItems, "Not quite. Chapter 10 is about C-space obstacles, search structures, sampling, potentials, and smoothing.");
 renderChapter11Concepts();
 renderGenericQuiz("#chapter11Quiz", chapter11QuizItems, "Not quite. Chapter 11 asks which signal is controlled, what error dynamics result, and how contact changes the objective.");
+renderChapter12Concepts();
+renderGenericQuiz("#chapter12Quiz", chapter12QuizItems, "Not quite. Chapter 12 is about contact kinematics, friction-limited wrenches, closure, and manipulation modes.");
 setChapter("1");
 drawArm();
