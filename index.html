@@ -27,6 +27,7 @@
         <button class="chapter-switch" data-target-chapter="11">Chapter 11</button>
         <button class="chapter-switch" data-target-chapter="12">Chapter 12</button>
         <button class="chapter-switch" data-target-chapter="13">Chapter 13</button>
+        <button class="chapter-switch" data-target-chapter="A">Appendix A</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1916,6 +1917,104 @@
           <p>These checks separate omni models, nonholonomic constraints, controllability, odometry, and mobile manipulation.</p>
         </div>
         <div class="quiz" id="chapter13Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="A">
+      <section class="chapter-hero appendixA-hero" id="appendixA" aria-labelledby="appendixA-title">
+        <div>
+          <p class="kicker">Appendix A</p>
+          <h2 id="appendixA-title">Summary of Useful Formulas</h2>
+          <p>
+            Appendix A is the book's quick-reference sheet. It gathers the equations
+            that keep reappearing: degrees of freedom, SO(3), SE(3), twists, wrenches,
+            product of exponentials, Jacobians, dynamics, trajectories, control, contact,
+            and wheeled-base models.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">How to use it</p>
+          <strong>choose the object, then choose the map</strong>
+          <p>
+            Most robotics formulas answer one of three questions: what is the state,
+            how does it move, or what effort/contact/control produces that motion?
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="appendixA-spine" aria-labelledby="appendixA-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Formula index</p>
+          <h2 id="appendixA-spine-title">What Appendix A collects</h2>
+          <p>
+            Use these cards as the master checklist after studying the chapters. Each
+            card points to a repeated mathematical object or equation family.
+          </p>
+        </div>
+        <div class="concept-grid" id="appendixAConcepts"></div>
+      </section>
+
+      <section class="band" id="appendixA-explorer" aria-labelledby="formula-explorer-title">
+        <div class="section-head">
+          <p class="eyebrow">Interactive reference</p>
+          <h2 id="formula-explorer-title">Formula explorer</h2>
+          <p>
+            Pick a formula family. The explorer shows the object, the map it belongs
+            to, and the practical question it answers while the diagram highlights the
+            same part of the robotics pipeline.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>formula family
+              <select id="formulaTopic">
+                <option value="dof">Configuration and DOF</option>
+                <option value="so3">SO(3) rotations</option>
+                <option value="se3">SE(3), twists, and adjoints</option>
+                <option value="poe">Product of exponentials</option>
+                <option value="jacobian">Jacobians and statics</option>
+                <option value="dynamics">Robot dynamics</option>
+                <option value="trajectory">Trajectory timing</option>
+                <option value="control">Feedback control</option>
+                <option value="contact">Contact and friction</option>
+                <option value="mobile">Wheeled mobile robots</option>
+              </select>
+            </label>
+            <label>detail level <span id="formulaDetailLabel">3</span><input id="formulaDetail" type="range" min="1" max="5" value="3"></label>
+            <div class="matrix-readout" id="formulaReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="formulaCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="appendixA-patterns" aria-labelledby="formula-patterns-title">
+        <div class="section-head">
+          <p class="eyebrow">Study patterns</p>
+          <h2 id="formula-patterns-title">Recurring formula shapes</h2>
+          <p>
+            The appendix is easier to remember if you recognize the repeated patterns
+            instead of treating every equation as isolated.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Configuration to pose</h3><p>Forward kinematics maps joint values to T, usually with products of exponentials.</p></article>
+          <article class="task-card"><h3>Velocity to twist</h3><p>Jacobians map generalized speeds to spatial or body twists.</p></article>
+          <article class="task-card"><h3>Wrench to effort</h3><p>Transpose Jacobians map endpoint wrenches back to joint torques.</p></article>
+          <article class="task-card"><h3>Motion to effort</h3><p>Dynamics maps acceleration, velocity, gravity, friction, and loads to required torque.</p></article>
+          <article class="task-card"><h3>Error to command</h3><p>Feedback laws turn pose, velocity, force, or task-space error into commanded velocity or torque.</p></article>
+          <article class="task-card"><h3>Constraints to freedoms</h3><p>Contact and wheel constraints remove instantaneous motions, while Lie brackets can recover reachability.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="appendixA-check" aria-labelledby="appendixA-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="appendixA-quiz-title">Appendix A checkpoint</h2>
+          <p>These checks test whether you know which formula family answers which robotics question.</p>
+        </div>
+        <div class="quiz" id="appendixAQuiz"></div>
       </section>
       </div>
     </main>

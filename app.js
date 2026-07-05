@@ -936,6 +936,103 @@ const chapter13QuizItems = [
   { q: "What is mobile manipulation?", answers: ["Coordinated control of a mobile base and arm to move the end-effector.", "Only a fixed-base arm.", "Only a standalone wheel."], correct: 0, note: "Correct. The base gives reach; the arm gives dexterity." }
 ];
 
+const appendixAConcepts = [
+  { title: "Degrees of freedom", text: "Count configuration variables minus independent constraints; Grubler's formula is the mechanism shortcut." },
+  { title: "SO(3)", text: "Rotation matrices, axis-angle exponentials, angular velocity, and matrix logarithms." },
+  { title: "SE(3)", text: "Rigid transforms, twists, adjoints, screw axes, exponential coordinates, and wrenches." },
+  { title: "PoE forward kinematics", text: "Space and body product-of-exponentials formulas map joint values to end-effector pose." },
+  { title: "Jacobians", text: "Space/body Jacobians map joint rates to twists and relate through adjoint transforms." },
+  { title: "Statics", text: "Joint efforts are transpose-Jacobian maps of endpoint wrenches." },
+  { title: "Inverse kinematics", text: "Closed-form geometry or Newton-Raphson updates using the Jacobian pseudoinverse." },
+  { title: "Dynamics", text: "Mass matrix, velocity terms, gravity, friction, and endpoint loads determine torque." },
+  { title: "Trajectories", text: "Path geometry plus time scaling gives position, velocity, and acceleration profiles." },
+  { title: "Control", text: "Feedforward plus feedback maps desired motion and error to commanded velocity or torque." },
+  { title: "Contact", text: "Contact normals, friction cones, form closure, and force closure describe manipulation constraints." },
+  { title: "Mobile robots", text: "Wheel-speed matrices, nonholonomic models, Lie brackets, odometry, and mobile-manipulator Jacobians." }
+];
+
+const formulaTopics = {
+  dof: {
+    label: "Configuration and DOF",
+    formula: "dof = m(N - 1 - J) + sum(fi)",
+    question: "How many independent coordinates describe this mechanism?",
+    note: "Use m = 3 for planar mechanisms and m = 6 for spatial mechanisms when constraints are independent.",
+    chapter: "Ch. 2"
+  },
+  so3: {
+    label: "SO(3) rotations",
+    formula: "R = exp([omega] theta), R^-1 = R^T",
+    question: "How do I represent and compose 3D orientation?",
+    note: "SO(3) formulas convert between rotation matrices, angular velocities, and exponential coordinates.",
+    chapter: "Ch. 3"
+  },
+  se3: {
+    label: "SE(3), twists, and adjoints",
+    formula: "T = [R p; 0 1], Va = Ad_Tab Vb",
+    question: "How do I move poses, twists, and wrenches between frames?",
+    note: "Adjoints are the bridge between coordinate frames for screw axes and twists; inverse-transpose adjoints handle wrenches.",
+    chapter: "Ch. 3"
+  },
+  poe: {
+    label: "Product of exponentials",
+    formula: "T(theta) = exp([S1]theta1)...exp([Sn]thetan) M",
+    question: "Given joint angles, where is the end-effector?",
+    note: "The space form multiplies screw motions before the home pose; the body form multiplies them after M.",
+    chapter: "Ch. 4"
+  },
+  jacobian: {
+    label: "Jacobians and statics",
+    formula: "V = J(theta) thetadot, tau = J(theta)^T F",
+    question: "How do joint rates and endpoint twists or wrenches relate?",
+    note: "The same Jacobian that maps velocity forward maps endpoint wrench backward through its transpose.",
+    chapter: "Ch. 5"
+  },
+  dynamics: {
+    label: "Robot dynamics",
+    formula: "tau = M(theta) thetaddot + c(theta,thetadot) + g(theta) + J^T Ftip",
+    question: "What torque is needed for this motion and load?",
+    note: "The mass matrix changes with configuration, while velocity, gravity, friction, and external wrenches add effort terms.",
+    chapter: "Ch. 8"
+  },
+  trajectory: {
+    label: "Trajectory timing",
+    formula: "trajectory = path q(s) plus time scaling s(t)",
+    question: "How do I turn a geometric path into commanded motion?",
+    note: "Cubic and quintic time scalings enforce endpoint velocity and acceleration conditions.",
+    chapter: "Ch. 9"
+  },
+  control: {
+    label: "Feedback control",
+    formula: "command = feedforward + Kp error + Ki integral + Kd error_dot",
+    question: "How do I make the robot track despite disturbances?",
+    note: "Chapter 11 applies this pattern to velocity inputs, torque inputs, task-space motion, and contact.",
+    chapter: "Ch. 11"
+  },
+  contact: {
+    label: "Contact and friction",
+    formula: "|ft| <= mu fn; feasible twists satisfy contact half-spaces",
+    question: "What can the object do, and what wrenches can contacts resist?",
+    note: "Motion constraints and wrench cones are dual pictures for grasping and manipulation.",
+    chapter: "Ch. 12"
+  },
+  mobile: {
+    label: "Wheeled mobile robots",
+    formula: "omni: u = H Vb; nonholonomic: qdot = G(q)u",
+    question: "How do wheel speeds move the chassis and end-effector?",
+    note: "Omni bases command any planar twist; nonholonomic bases rely on maneuvers, controllability, and odometry.",
+    chapter: "Ch. 13"
+  }
+};
+
+const appendixAQuizItems = [
+  { q: "Which formula family counts mechanism coordinates?", answers: ["Degrees of freedom and constraints.", "Force closure only.", "Cubic time scaling only."], correct: 0, note: "Yes. DOF is configuration variables minus independent constraints." },
+  { q: "Which object maps joint rates to endpoint twists?", answers: ["The Jacobian.", "The mass matrix alone.", "The friction coefficient."], correct: 0, note: "Correct. V = J(theta) thetadot." },
+  { q: "Which formula maps endpoint wrench to joint effort?", answers: ["tau = J^T F.", "R^-1 = R^T.", "qdot = G(q)u."], correct: 0, note: "Right. This is the statics dual of differential kinematics." },
+  { q: "Which formula family predicts torque for acceleration, gravity, and loads?", answers: ["Robot dynamics.", "Appendix B Euler angles.", "Only Grubler's formula."], correct: 0, note: "Exactly. Dynamics maps motion and load to effort." },
+  { q: "Which appendix pattern is most useful for mobile base odometry?", answers: ["Wheel increments mapped through the chassis model and integrated.", "A force ellipsoid.", "A friction cone only."], correct: 0, note: "Yes. Odometry is wheel-motion integration through the kinematic model." },
+  { q: "What does the product of exponentials answer?", answers: ["Forward kinematics from joint values to pose.", "How much friction is available.", "Whether a car can move sideways instantly."], correct: 0, note: "Good. PoE is the compact forward-kinematics formula." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1169,6 +1266,11 @@ const rightBiasLabel = document.querySelector("#rightBiasLabel");
 const odomStepsLabel = document.querySelector("#odomStepsLabel");
 const odometryReadout = document.querySelector("#odometryReadout");
 const odometryCanvas = document.querySelector("#odometryCanvas");
+const formulaTopic = document.querySelector("#formulaTopic");
+const formulaDetail = document.querySelector("#formulaDetail");
+const formulaDetailLabel = document.querySelector("#formulaDetailLabel");
+const formulaReadout = document.querySelector("#formulaReadout");
+const formulaCanvas = document.querySelector("#formulaCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -3663,6 +3765,72 @@ function drawOdometryLab() {
   ctx.fillText("blue true model, red encoder-biased odometry", 28, 34);
 }
 
+function renderAppendixAConcepts() {
+  const el = document.querySelector("#appendixAConcepts");
+  el.innerHTML = appendixAConcepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function drawFormulaExplorer() {
+  const topic = formulaTopics[formulaTopic.value];
+  const detail = Number(formulaDetail.value);
+  formulaDetailLabel.textContent = String(detail);
+  formulaReadout.innerHTML = `<strong>${topic.chapter}: ${topic.label}</strong>
+    <p><code>${topic.formula}</code></p>
+    <p><b>Question:</b> ${topic.question}</p>
+    <p>${detail >= 4 ? topic.note : "Raise the detail level for the practical usage note."}</p>`;
+  const { ctx, w, h } = setupCanvas(formulaCanvas);
+  grid(ctx, w, h);
+  const nodes = [
+    { key: "dof", x: 0.14, y: 0.26, label: "config" },
+    { key: "so3", x: 0.32, y: 0.18, label: "SO(3)" },
+    { key: "se3", x: 0.50, y: 0.20, label: "SE(3)" },
+    { key: "poe", x: 0.68, y: 0.28, label: "PoE" },
+    { key: "jacobian", x: 0.78, y: 0.50, label: "J" },
+    { key: "dynamics", x: 0.63, y: 0.72, label: "tau" },
+    { key: "trajectory", x: 0.40, y: 0.74, label: "s(t)" },
+    { key: "control", x: 0.22, y: 0.64, label: "control" },
+    { key: "contact", x: 0.20, y: 0.46, label: "contact" },
+    { key: "mobile", x: 0.50, y: 0.48, label: "mobile" }
+  ];
+  const edges = [
+    ["dof", "so3"], ["so3", "se3"], ["se3", "poe"], ["poe", "jacobian"],
+    ["jacobian", "dynamics"], ["trajectory", "control"], ["control", "dynamics"],
+    ["contact", "control"], ["mobile", "jacobian"], ["mobile", "control"]
+  ];
+  const map = Object.fromEntries(nodes.map((n) => [n.key, { ...n, px: n.x * w, py: n.y * h }]));
+  edges.forEach(([a, b]) => {
+    const pa = map[a];
+    const pb = map[b];
+    ctx.strokeStyle = a === formulaTopic.value || b === formulaTopic.value ? "#b84a3a" : "#d6dee6";
+    ctx.lineWidth = a === formulaTopic.value || b === formulaTopic.value ? 4 : 2;
+    ctx.beginPath();
+    ctx.moveTo(pa.px, pa.py);
+    ctx.lineTo(pb.px, pb.py);
+    ctx.stroke();
+  });
+  nodes.forEach((node) => {
+    const active = node.key === formulaTopic.value;
+    ctx.fillStyle = active ? "#b84a3a" : "#fff";
+    ctx.strokeStyle = active ? "#b84a3a" : "#2364aa";
+    ctx.lineWidth = active ? 4 : 3;
+    ctx.beginPath();
+    ctx.arc(map[node.key].px, map[node.key].py, active ? 34 : 28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = active ? "#fff" : "#16202a";
+    ctx.textAlign = "center";
+    ctx.fillText(node.label, map[node.key].px, map[node.key].py + 4);
+  });
+  ctx.textAlign = "start";
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("formula families as a robotics dependency map", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -3728,6 +3896,9 @@ function redrawActiveChapter() {
     drawOmniLab();
     drawNonholonomicLab();
     drawOdometryLab();
+  }
+  if (active === "A") {
+    drawFormulaExplorer();
   }
 }
 
@@ -3851,6 +4022,12 @@ const navLinksByChapter = {
     ["Odometry", "#chapter13-odometry"],
     ["Mobile Arm", "#chapter13-mobile-manipulation"],
     ["Check", "#chapter13-check"]
+  ],
+  "A": [
+    ["Index", "#appendixA-spine"],
+    ["Explorer", "#appendixA-explorer"],
+    ["Patterns", "#appendixA-patterns"],
+    ["Check", "#appendixA-check"]
   ]
 };
 
@@ -4005,6 +4182,10 @@ contactTwistMode.addEventListener("change", applyContactTwistPreset);
 [leftBias, rightBias, odomSteps].forEach((input) => {
   input.addEventListener("input", drawOdometryLab);
 });
+[formulaTopic, formulaDetail].forEach((input) => {
+  input.addEventListener("input", drawFormulaExplorer);
+  input.addEventListener("change", drawFormulaExplorer);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -4038,5 +4219,7 @@ renderChapter12Concepts();
 renderGenericQuiz("#chapter12Quiz", chapter12QuizItems, "Not quite. Chapter 12 is about contact kinematics, friction-limited wrenches, closure, and manipulation modes.");
 renderChapter13Concepts();
 renderGenericQuiz("#chapter13Quiz", chapter13QuizItems, "Not quite. Chapter 13 separates omnidirectional velocity control, nonholonomic reachable motion, odometry, and base-plus-arm coordination.");
+renderAppendixAConcepts();
+renderGenericQuiz("#appendixAQuiz", appendixAQuizItems, "Not quite. Appendix A is a formula map: identify the object being mapped, then the direction of the map.");
 setChapter("1");
 drawArm();
