@@ -1057,6 +1057,30 @@ const appendixBQuizItems = [
   { q: "Which representation is usually best for directly rotating a vector?", answers: ["A rotation matrix.", "A chapter number.", "A friction cone."], correct: 0, note: "Good. Matrices act directly on vectors, even if another representation is used for storage." }
 ];
 
+const appendixCConcepts = [
+  { title: "D-H purpose", text: "Compute open-chain forward kinematics from relative transforms between adjacent link frames." },
+  { title: "Numbering", text: "Links and frames run from 0 to n, with frame {0} fixed and frame {n} on the end-effector." },
+  { title: "z-axis rule", text: "For revolute joints, z_i is the joint axis; for prismatic joints, z_i is the translation direction." },
+  { title: "x-axis rule", text: "The x-axis follows the mutually perpendicular line from z_(i-1) to z_i when that line is unique." },
+  { title: "Link length a", text: "a_(i-1) is the length of the mutual perpendicular, not necessarily the physical link length." },
+  { title: "Link twist alpha", text: "alpha_(i-1) is the angle from z_(i-1) to z_i measured about x_(i-1)." },
+  { title: "Link offset d", text: "d_i is the distance along z_i from the mutual perpendicular to the origin of frame {i}." },
+  { title: "Joint angle phi", text: "phi_i is the angle from x_(i-1) to x_i measured about z_i." },
+  { title: "Revolute vs prismatic", text: "For revolute joints phi is variable; for prismatic joints d is variable." },
+  { title: "Special axes", text: "Intersecting axes set a to zero; parallel axes create many valid frame choices." },
+  { title: "Four parameters", text: "Four are sufficient only because link frames obey the convention; arbitrary frames need more freedom." },
+  { title: "PoE comparison", text: "D-H is a historical frame-table convention; PoE uses screw axes and a home configuration." }
+];
+
+const appendixCQuizItems = [
+  { q: "What axis is assigned to a revolute joint in the D-H convention?", answers: ["The z-axis of the corresponding link frame.", "Always the x-axis.", "The world y-axis only."], correct: 0, note: "Yes. The z-axis is aligned with the joint axis." },
+  { q: "What does a_(i-1) measure?", answers: ["The length of the mutual perpendicular between adjacent joint axes.", "The motor current.", "The end-effector wrench."], correct: 0, note: "Correct. It is a geometric distance between the assigned axes." },
+  { q: "For a prismatic joint, which D-H parameter is the joint variable?", answers: ["d_i.", "alpha_(i-1).", "The mass matrix."], correct: 0, note: "Right. Prismatic motion changes offset along z_i." },
+  { q: "What happens when adjacent revolute axes intersect?", answers: ["The link length a can be set to zero.", "No frame can be assigned.", "The robot must be planar."], correct: 0, note: "Exactly. The mutual perpendicular has zero length." },
+  { q: "Why can D-H use only four parameters per link transform?", answers: ["The frame-assignment convention restricts the relative transform.", "Spatial motion only has four DOF.", "D-H ignores orientation."], correct: 0, note: "Yes. The restriction comes from how frames are chosen." },
+  { q: "How is D-H different from PoE?", answers: ["D-H builds a table of adjacent-frame transforms; PoE uses screw axes and a home pose.", "They are the same notation exactly.", "PoE cannot do forward kinematics."], correct: 0, note: "Good. They are two valid forward-kinematics representations with different ingredients." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1304,6 +1328,16 @@ const rotBetaLabel = document.querySelector("#rotBetaLabel");
 const rotGammaLabel = document.querySelector("#rotGammaLabel");
 const rotationRepReadout = document.querySelector("#rotationRepReadout");
 const rotationRepCanvas = document.querySelector("#rotationRepCanvas");
+const dhAlpha = document.querySelector("#dhAlpha");
+const dhA = document.querySelector("#dhA");
+const dhD = document.querySelector("#dhD");
+const dhPhi = document.querySelector("#dhPhi");
+const dhAlphaLabel = document.querySelector("#dhAlphaLabel");
+const dhALabel = document.querySelector("#dhALabel");
+const dhDLabel = document.querySelector("#dhDLabel");
+const dhPhiLabel = document.querySelector("#dhPhiLabel");
+const dhReadout = document.querySelector("#dhReadout");
+const dhCanvas = document.querySelector("#dhCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -3981,6 +4015,74 @@ function drawRotationRepresentationLab() {
   ctx.fillText("rotated body frame and cube; all representations describe this same R", 28, 34);
 }
 
+function renderAppendixCConcepts() {
+  const el = document.querySelector("#appendixCConcepts");
+  el.innerHTML = appendixCConcepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function dhTransform(alpha, a, d, phi) {
+  const ca = Math.cos(alpha);
+  const sa = Math.sin(alpha);
+  const cp = Math.cos(phi);
+  const sp = Math.sin(phi);
+  return [
+    [cp, -sp, 0, a],
+    [sp * ca, cp * ca, -sa, -d * sa],
+    [sp * sa, cp * sa, ca, d * ca],
+    [0, 0, 0, 1]
+  ];
+}
+
+function drawDhLab() {
+  const alpha = degToRad(Number(dhAlpha.value));
+  const a = Number(dhA.value);
+  const d = Number(dhD.value);
+  const phi = degToRad(Number(dhPhi.value));
+  const T = dhTransform(alpha, a, d, phi);
+  dhAlphaLabel.textContent = `${Number(dhAlpha.value)} deg`;
+  dhALabel.textContent = fmt(a);
+  dhDLabel.textContent = fmt(d);
+  dhPhiLabel.textContent = `${Number(dhPhi.value)} deg`;
+  dhReadout.innerHTML = `<strong>Rx(alpha) Tx(a) Tz(d) Rz(phi)</strong>
+    ${matrixHtml(T.map((row) => row.map(fmt)))}
+    <p>For a revolute joint, phi changes. For a prismatic joint, d changes.</p>`;
+  const { ctx, w, h } = setupCanvas(dhCanvas);
+  grid(ctx, w, h);
+  const base = { x: w * 0.28, y: h * 0.64 };
+  const scale = 78;
+  const joint0 = base;
+  const joint1 = { x: base.x + a * scale, y: base.y - d * scale * 0.45 };
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(joint0.x, joint0.y + 86);
+  ctx.lineTo(joint0.x, joint0.y - 86);
+  ctx.moveTo(joint1.x, joint1.y + 86);
+  ctx.lineTo(joint1.x + Math.sin(alpha) * 48, joint1.y - 86);
+  ctx.stroke();
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 4;
+  ctx.setLineDash([8, 5]);
+  ctx.beginPath();
+  ctx.moveTo(joint0.x, joint0.y);
+  ctx.lineTo(joint1.x, joint1.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  drawArrow(ctx, joint0, { x: joint0.x + 76, y: joint0.y }, "#b84a3a", 4);
+  drawArrow(ctx, joint0, { x: joint0.x, y: joint0.y - 76 }, "#2a8c6d", 4);
+  const xAxis = { x: Math.cos(phi) * 76, y: -Math.sin(phi) * 76 };
+  drawArrow(ctx, joint1, { x: joint1.x + xAxis.x, y: joint1.y + xAxis.y }, "#b84a3a", 4);
+  drawArrow(ctx, joint1, { x: joint1.x + Math.sin(alpha) * 42, y: joint1.y - 76 * Math.cos(alpha) }, "#2a8c6d", 4);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("dashed blue: mutual perpendicular a; vertical axes: z_(i-1), z_i", 28, 34);
+  ctx.fillText(`alpha twists z axes by ${Number(dhAlpha.value)} deg; phi rotates x_i by ${Number(dhPhi.value)} deg`, 28, 56);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -4052,6 +4154,9 @@ function redrawActiveChapter() {
   }
   if (active === "B") {
     drawRotationRepresentationLab();
+  }
+  if (active === "C") {
+    drawDhLab();
   }
 }
 
@@ -4187,6 +4292,12 @@ const navLinksByChapter = {
     ["Lab", "#appendixB-lab"],
     ["Tradeoffs", "#appendixB-tradeoffs"],
     ["Check", "#appendixB-check"]
+  ],
+  "C": [
+    ["Map", "#appendixC-spine"],
+    ["D-H Row", "#appendixC-lab"],
+    ["Cases", "#appendixC-cases"],
+    ["Check", "#appendixC-check"]
   ]
 };
 
@@ -4349,6 +4460,9 @@ contactTwistMode.addEventListener("change", applyContactTwistPreset);
   input.addEventListener("input", drawRotationRepresentationLab);
   input.addEventListener("change", drawRotationRepresentationLab);
 });
+[dhAlpha, dhA, dhD, dhPhi].forEach((input) => {
+  input.addEventListener("input", drawDhLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -4386,5 +4500,7 @@ renderAppendixAConcepts();
 renderGenericQuiz("#appendixAQuiz", appendixAQuizItems, "Not quite. Appendix A is a formula map: identify the object being mapped, then the direction of the map.");
 renderAppendixBConcepts();
 renderGenericQuiz("#appendixBQuiz", appendixBQuizItems, "Not quite. Appendix B compares orientation representations; ask whether the issue is interpretation, singularity, double cover, or direct matrix action.");
+renderAppendixCConcepts();
+renderGenericQuiz("#appendixCQuiz", appendixCQuizItems, "Not quite. Appendix C is about D-H frame assignment: identify the joint axis, mutual perpendicular, variable parameter, and transform order.");
 setChapter("1");
 drawArm();

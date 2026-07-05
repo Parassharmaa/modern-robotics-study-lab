@@ -29,6 +29,7 @@
         <button class="chapter-switch" data-target-chapter="13">Chapter 13</button>
         <button class="chapter-switch" data-target-chapter="A">Appendix A</button>
         <button class="chapter-switch" data-target-chapter="B">Appendix B</button>
+        <button class="chapter-switch" data-target-chapter="C">Appendix C</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -2110,6 +2111,91 @@
           <p>These checks test the difference between Euler-style angles, quaternions, and Cayley-Rodrigues parameters.</p>
         </div>
         <div class="quiz" id="appendixBQuiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="C">
+      <section class="chapter-hero appendixC-hero" id="appendixC" aria-labelledby="appendixC-title">
+        <div>
+          <p class="kicker">Appendix C</p>
+          <h2 id="appendixC-title">Denavit-Hartenberg Parameters</h2>
+          <p>
+            Appendix C explains the classic D-H convention for assigning link frames
+            and computing open-chain forward kinematics from four parameters per
+            joint: link twist, link length, link offset, and joint angle.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Link transform</p>
+          <strong>T(i-1,i) = Rx(alpha) Tx(a) Tz(d) Rz(phi)</strong>
+          <p>
+            The four-parameter shortcut works because the link frames are not arbitrary:
+            their axes are assigned by a strict geometric convention.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="appendixC-spine" aria-labelledby="appendixC-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Frame-assignment map</p>
+          <h2 id="appendixC-spine-title">What Appendix C covers</h2>
+          <p>
+            This appendix is a practical recipe: choose link frames, fill a D-H table,
+            multiply adjacent-link transforms, and compare the convention with PoE.
+          </p>
+        </div>
+        <div class="concept-grid" id="appendixCConcepts"></div>
+      </section>
+
+      <section class="band" id="appendixC-lab" aria-labelledby="dh-lab-title">
+        <div class="section-head">
+          <p class="eyebrow">Interactive D-H row</p>
+          <h2 id="dh-lab-title">Build one D-H transform</h2>
+          <p>
+            Adjust the four D-H parameters for a single adjacent-link transform. The
+            matrix is the product of a rotation about x, translation along x,
+            translation along z, and rotation about z.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>alpha link twist <span id="dhAlphaLabel">20 deg</span><input id="dhAlpha" type="range" min="-180" max="180" value="20"></label>
+            <label>a link length <span id="dhALabel">1.20</span><input id="dhA" type="range" min="0" max="2.5" step="0.05" value="1.2"></label>
+            <label>d link offset <span id="dhDLabel">0.55</span><input id="dhD" type="range" min="-1.5" max="1.5" step="0.05" value="0.55"></label>
+            <label>phi joint angle <span id="dhPhiLabel">45 deg</span><input id="dhPhi" type="range" min="-180" max="180" value="45"></label>
+            <div class="matrix-readout" id="dhReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="dhCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="appendixC-cases" aria-labelledby="dh-cases-title">
+        <div class="section-head">
+          <p class="eyebrow">Special cases</p>
+          <h2 id="dh-cases-title">Frame choices are constrained, but not always unique</h2>
+          <p>
+            D-H tables are compact only because the frame assignment rules remove
+            freedoms. Intersecting axes, parallel axes, prismatic joints, and arbitrary
+            end frames all need care.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Intersecting axes</h3><p>The mutual perpendicular has zero length, so set a = 0 and choose an x-axis perpendicular to the plane of the joint axes.</p></article>
+          <article class="task-card"><h3>Parallel axes</h3><p>Many mutual perpendiculars exist; choose one that is physically intuitive and creates zeros in the table.</p></article>
+          <article class="task-card"><h3>Prismatic joints</h3><p>The z-axis follows the positive translation direction; d becomes the joint variable and phi is constant.</p></article>
+          <article class="task-card"><h3>Ground and tool frames</h3><p>Choose frames that make the task natural and simplify the table, but remember arbitrary frames may not admit D-H parameters.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="appendixC-check" aria-labelledby="appendixC-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="appendixC-quiz-title">Appendix C checkpoint</h2>
+          <p>These checks test D-H frame assignment, parameter meaning, special cases, and relation to PoE.</p>
+        </div>
+        <div class="quiz" id="appendixCQuiz"></div>
       </section>
       </div>
     </main>
