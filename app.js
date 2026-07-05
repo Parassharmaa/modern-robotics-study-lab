@@ -631,6 +631,94 @@ const chapter5QuizItems = [
   }
 ];
 
+const chapter6Concepts = [
+  {
+    title: "Inverse kinematics problem",
+    text: "Given a desired end-effector pose Xd, find joint coordinates theta such that T(theta) matches Xd."
+  },
+  {
+    title: "Multiple solutions",
+    text: "Many robots have several IK branches, such as elbow-up and elbow-down postures reaching the same target."
+  },
+  {
+    title: "No solution",
+    text: "Targets outside the workspace or incompatible with orientation limits have no exact joint solution."
+  },
+  {
+    title: "Analytic IK",
+    text: "Special robot geometries, such as PUMA-type or Stanford-type arms, can be solved by geometric/algebraic decomposition."
+  },
+  {
+    title: "Newton-Raphson IK",
+    text: "General numerical IK repeatedly linearizes error with the Jacobian and applies a joint correction."
+  },
+  {
+    title: "Error twist",
+    text: "For spatial robots, pose error is represented as a twist-like quantity using the matrix logarithm from Chapter 3."
+  },
+  {
+    title: "Inverse velocity kinematics",
+    text: "The linear subproblem V = J thetadot is solved directly, by pseudoinverse, or with damping near singularities."
+  },
+  {
+    title: "Closed-loop note",
+    text: "Closed chains add loop-closure equations and passive-joint compatibility to the IK problem."
+  }
+];
+
+const chapter6QuizItems = [
+  {
+    q: "What does inverse kinematics solve for?",
+    answers: [
+      "Joint coordinates that realize a desired end-effector pose.",
+      "The mass of every link.",
+      "Only endpoint velocity from joint velocity."
+    ],
+    correct: 0,
+    note: "Yes. IK reverses the forward kinematics question."
+  },
+  {
+    q: "Why can IK have multiple answers?",
+    answers: [
+      "Different robot postures can place the end-effector at the same pose.",
+      "Forward kinematics is random.",
+      "The robot must be singular."
+    ],
+    correct: 0,
+    note: "Right. Elbow-up and elbow-down branches are the classic planar example."
+  },
+  {
+    q: "What does numerical IK use at each correction step?",
+    answers: [
+      "A Jacobian-based linearization of the pose error.",
+      "Only the URDF text.",
+      "A new motor model."
+    ],
+    correct: 0,
+    note: "Exactly. Newton-style IK updates theta through a local Jacobian solve."
+  },
+  {
+    q: "What is inverse velocity kinematics?",
+    answers: [
+      "Solving V = J thetadot for joint rates.",
+      "Computing T(theta) from theta.",
+      "Counting degrees of freedom."
+    ],
+    correct: 0,
+    note: "Good. It is the linear subproblem inside many IK methods."
+  },
+  {
+    q: "What is a practical issue near singularities?",
+    answers: [
+      "Small task corrections may require very large joint corrections.",
+      "The forward kinematics disappears.",
+      "The robot gains extra motors."
+    ],
+    correct: 0,
+    note: "Yes. Damping and step limits are practical ways to keep numerical IK calm."
+  }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -717,6 +805,21 @@ const staticsReadout = document.querySelector("#staticsReadout");
 const staticsCanvas = document.querySelector("#staticsCanvas");
 const manipReadout = document.querySelector("#manipReadout");
 const manipCanvas = document.querySelector("#manipCanvas");
+const ikTargetX = document.querySelector("#ikTargetX");
+const ikTargetY = document.querySelector("#ikTargetY");
+const ikTargetXLabel = document.querySelector("#ikTargetXLabel");
+const ikTargetYLabel = document.querySelector("#ikTargetYLabel");
+const ikBranch = document.querySelector("#ikBranch");
+const analyticIkReadout = document.querySelector("#analyticIkReadout");
+const analyticIkCanvas = document.querySelector("#analyticIkCanvas");
+const numIkTheta1 = document.querySelector("#numIkTheta1");
+const numIkTheta2 = document.querySelector("#numIkTheta2");
+const numIkIterations = document.querySelector("#numIkIterations");
+const numIkTheta1Label = document.querySelector("#numIkTheta1Label");
+const numIkTheta2Label = document.querySelector("#numIkTheta2Label");
+const numIkIterationsLabel = document.querySelector("#numIkIterationsLabel");
+const numericIkReadout = document.querySelector("#numericIkReadout");
+const numericIkCanvas = document.querySelector("#numericIkCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -1827,6 +1930,186 @@ function drawManipulabilityLab() {
   ctx.fillText("velocity manipulability ellipse", 28, 34);
 }
 
+function renderChapter6Concepts() {
+  const el = document.querySelector("#chapter6Concepts");
+  el.innerHTML = chapter6Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function solve2rIk(x, y, elbowSign) {
+  const l1 = 128;
+  const l2 = 102;
+  const r2 = x * x + y * y;
+  const c2Raw = (r2 - l1 * l1 - l2 * l2) / (2 * l1 * l2);
+  const reachable = c2Raw >= -1 && c2Raw <= 1;
+  const c2 = Math.max(-1, Math.min(1, c2Raw));
+  const s2 = elbowSign * Math.sqrt(Math.max(0, 1 - c2 * c2));
+  const theta2 = Math.atan2(s2, c2);
+  const theta1 = Math.atan2(y, x) - Math.atan2(l2 * s2, l1 + l2 * c2);
+  return { l1, l2, reachable, theta1, theta2, c2Raw };
+}
+
+function fk2r(theta1, theta2, l1 = 128, l2 = 102) {
+  const p1 = { x: l1 * Math.cos(theta1), y: l1 * Math.sin(theta1) };
+  const p2 = { x: p1.x + l2 * Math.cos(theta1 + theta2), y: p1.y + l2 * Math.sin(theta1 + theta2) };
+  return { p1, p2 };
+}
+
+function draw2rArmOnCanvas(ctx, w, h, theta1, theta2, options = {}) {
+  const l1 = 128;
+  const l2 = 102;
+  const fk = fk2r(theta1, theta2, l1, l2);
+  const base = { x: w / 2, y: h / 2 + 54 };
+  const pts = [
+    { x: base.x, y: base.y },
+    { x: base.x + fk.p1.x, y: base.y - fk.p1.y },
+    { x: base.x + fk.p2.x, y: base.y - fk.p2.y }
+  ];
+  ctx.strokeStyle = "rgba(35, 100, 170, 0.16)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(base.x, base.y, l1 + l2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineCap = "round";
+  ctx.lineWidth = 12;
+  ctx.strokeStyle = options.muted ? "#8aa8c8" : "#2364aa";
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.stroke();
+  ctx.strokeStyle = options.muted ? "#93baa9" : "#2a8c6d";
+  ctx.beginPath();
+  ctx.moveTo(pts[1].x, pts[1].y);
+  ctx.lineTo(pts[2].x, pts[2].y);
+  ctx.stroke();
+  pts.forEach((p, i) => {
+    ctx.fillStyle = i === 2 ? "#b84a3a" : "#fff";
+    ctx.strokeStyle = "#16202a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, i === 2 ? 8 : 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  return { base, pts, tip: fk.p2 };
+}
+
+function drawAnalyticIkLab() {
+  const x = Number(ikTargetX.value);
+  const y = Number(ikTargetY.value);
+  const elbowSign = ikBranch.value === "up" ? 1 : -1;
+  const sol = solve2rIk(x, y, elbowSign);
+  ikTargetXLabel.textContent = String(x);
+  ikTargetYLabel.textContent = String(y);
+  const t1 = (sol.theta1 * 180) / Math.PI;
+  const t2 = (sol.theta2 * 180) / Math.PI;
+  analyticIkReadout.innerHTML = `<strong>Analytic 2R solution</strong>
+    <p>${sol.reachable ? "Reachable target." : "Outside exact workspace; showing nearest clamped branch."}</p>
+    <p>theta1 = ${fmt(t1)} deg, theta2 = ${fmt(t2)} deg, branch = ${ikBranch.value}.</p>
+    <p>cos(theta2) raw = ${fmt(sol.c2Raw)}. Values outside [-1, 1] mean no exact solution.</p>`;
+  const { ctx, w, h } = setupCanvas(analyticIkCanvas);
+  grid(ctx, w, h);
+  const drawn = draw2rArmOnCanvas(ctx, w, h, sol.theta1, sol.theta2);
+  const tx = drawn.base.x + x;
+  const ty = drawn.base.y - y;
+  ctx.strokeStyle = sol.reachable ? "#b84a3a" : "#d39b25";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(tx, ty, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(tx - 22, ty);
+  ctx.lineTo(tx + 22, ty);
+  ctx.moveTo(tx, ty - 22);
+  ctx.lineTo(tx, ty + 22);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("target", tx + 16, ty - 14);
+}
+
+function jacobian2r(theta1, theta2, l1 = 128, l2 = 102) {
+  const a12 = theta1 + theta2;
+  return [
+    [-l1 * Math.sin(theta1) - l2 * Math.sin(a12), -l2 * Math.sin(a12)],
+    [l1 * Math.cos(theta1) + l2 * Math.cos(a12), l2 * Math.cos(a12)]
+  ];
+}
+
+function runNumericIk() {
+  const target = { x: Number(ikTargetX.value), y: Number(ikTargetY.value) };
+  let t1 = degToRad(Number(numIkTheta1.value));
+  let t2 = degToRad(Number(numIkTheta2.value));
+  const iterations = Number(numIkIterations.value);
+  const path = [];
+  for (let i = 0; i <= iterations; i += 1) {
+    const fk = fk2r(t1, t2);
+    const err = { x: target.x - fk.p2.x, y: target.y - fk.p2.y };
+    path.push({ t1, t2, tip: fk.p2, err });
+    if (i === iterations) break;
+    const j = jacobian2r(t1, t2);
+    const det = j[0][0] * j[1][1] - j[0][1] * j[1][0];
+    if (Math.abs(det) < 0.001) break;
+    const inv = [
+      [j[1][1] / det, -j[0][1] / det],
+      [-j[1][0] / det, j[0][0] / det]
+    ];
+    const stepScale = 0.72;
+    const d1 = (inv[0][0] * err.x + inv[0][1] * err.y) * stepScale;
+    const d2 = (inv[1][0] * err.x + inv[1][1] * err.y) * stepScale;
+    const maxStep = 0.55;
+    t1 += Math.max(-maxStep, Math.min(maxStep, d1));
+    t2 += Math.max(-maxStep, Math.min(maxStep, d2));
+  }
+  return { target, path };
+}
+
+function drawNumericIkLab() {
+  const start1 = Number(numIkTheta1.value);
+  const start2 = Number(numIkTheta2.value);
+  const iterations = Number(numIkIterations.value);
+  numIkTheta1Label.textContent = `${start1} deg`;
+  numIkTheta2Label.textContent = `${start2} deg`;
+  numIkIterationsLabel.textContent = String(iterations);
+  const result = runNumericIk();
+  const last = result.path[result.path.length - 1];
+  const errNorm = Math.hypot(last.err.x, last.err.y);
+  numericIkReadout.innerHTML = `<strong>Newton-style IK path</strong>
+    <p>final theta = (${fmt((last.t1 * 180) / Math.PI)} deg, ${fmt((last.t2 * 180) / Math.PI)} deg)</p>
+    <p>remaining position error = ${fmt(errNorm)} after ${result.path.length - 1} correction steps.</p>`;
+  const { ctx, w, h } = setupCanvas(numericIkCanvas);
+  grid(ctx, w, h);
+  const base = { x: w / 2, y: h / 2 + 54 };
+  ctx.strokeStyle = "#d39b25";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  result.path.forEach((p, i) => {
+    const x = base.x + p.tip.x;
+    const y = base.y - p.tip.y;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  result.path.forEach((p, i) => {
+    ctx.fillStyle = i === result.path.length - 1 ? "#b84a3a" : "#d39b25";
+    ctx.beginPath();
+    ctx.arc(base.x + p.tip.x, base.y - p.tip.y, i === 0 ? 5 : 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  draw2rArmOnCanvas(ctx, w, h, last.t1, last.t2);
+  const tx = base.x + result.target.x;
+  const ty = base.y - result.target.y;
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(tx, ty, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("iteration trail", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -1855,6 +2138,10 @@ function redrawActiveChapter() {
     drawJacobianLab();
     drawStaticsLab();
     drawManipulabilityLab();
+  }
+  if (active === "6") {
+    drawAnalyticIkLab();
+    drawNumericIkLab();
   }
 }
 
@@ -1901,6 +2188,14 @@ const navLinksByChapter = {
     ["Statics", "#chapter5-statics"],
     ["Singularities", "#chapter5-singularity"],
     ["Check", "#chapter5-check"]
+  ],
+  "6": [
+    ["Spine", "#chapter6-spine"],
+    ["Analytic", "#chapter6-analytic"],
+    ["Numerical", "#chapter6-numerical"],
+    ["Velocity", "#chapter6-inverse-velocity"],
+    ["Loops", "#chapter6-closed-loops"],
+    ["Check", "#chapter6-check"]
   ]
 };
 
@@ -1991,6 +2286,16 @@ document.querySelectorAll(".singularity-preset").forEach((button) => {
     drawManipulabilityLab();
   });
 });
+[ikTargetX, ikTargetY].forEach((input) => {
+  input.addEventListener("input", () => {
+    drawAnalyticIkLab();
+    drawNumericIkLab();
+  });
+});
+ikBranch.addEventListener("change", drawAnalyticIkLab);
+[numIkTheta1, numIkTheta2, numIkIterations].forEach((input) => {
+  input.addEventListener("input", drawNumericIkLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -2008,5 +2313,7 @@ renderPoeSteps();
 renderGenericQuiz("#chapter4Quiz", chapter4QuizItems, "Not quite. Chapter 4 is about mapping known joint values forward to a pose; compare this with the PoE recipe above.");
 renderChapter5Concepts();
 renderGenericQuiz("#chapter5Quiz", chapter5QuizItems, "Not quite. Return to the Jacobian map and ask whether this option describes motion, force, or singularity behavior.");
+renderChapter6Concepts();
+renderGenericQuiz("#chapter6Quiz", chapter6QuizItems, "Not quite. Chapter 6 is about reversing forward kinematics with analytic branches or Jacobian-based numerical steps.");
 setChapter("1");
 drawArm();

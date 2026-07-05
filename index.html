@@ -19,6 +19,7 @@
         <button class="chapter-switch" data-target-chapter="3">Chapter 3</button>
         <button class="chapter-switch" data-target-chapter="4">Chapter 4</button>
         <button class="chapter-switch" data-target-chapter="5">Chapter 5</button>
+        <button class="chapter-switch" data-target-chapter="6">Chapter 6</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -811,6 +812,144 @@
           <p>These checks keep the Jacobian connected to motion, force, and singularity intuition.</p>
         </div>
         <div class="quiz" id="chapter5Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="6">
+      <section class="chapter-hero chapter6-hero" id="chapter6" aria-labelledby="chapter6-title">
+        <div>
+          <p class="kicker">Chapter 6</p>
+          <h2 id="chapter6-title">Inverse Kinematics</h2>
+          <p>
+            Inverse kinematics asks for joint coordinates that achieve a desired
+            end-effector pose. Chapter 6 contrasts analytic solutions for special
+            robots with numerical Newton-Raphson methods for general open chains.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Reverse problem</p>
+          <strong>Find theta so T(theta) = Xd</strong>
+          <p>
+            Solutions may be multiple, unique, nonexistent, or sensitive near
+            singularities. Numerical IK iteratively reduces pose error.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter6-spine" aria-labelledby="chapter6-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter6-spine-title">What Chapter 6 covers</h2>
+          <p>
+            The chapter shows when IK can be solved by geometry and when it becomes an
+            iterative root-finding problem on the forward kinematics map.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter6Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter6-analytic" aria-labelledby="analytic-ik-title">
+        <div class="section-head">
+          <p class="eyebrow">Analytic IK intuition</p>
+          <h2 id="analytic-ik-title">A target can have elbow-up, elbow-down, or no solution</h2>
+          <p>
+            This 2R planar arm is simpler than a PUMA or Stanford arm, but it exposes the
+            same core IK facts: geometry gives branches, and reachability matters.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>target x <span id="ikTargetXLabel">140</span><input id="ikTargetX" type="range" min="-220" max="220" value="140"></label>
+            <label>target y <span id="ikTargetYLabel">72</span><input id="ikTargetY" type="range" min="-180" max="220" value="72"></label>
+            <label>branch
+              <select id="ikBranch">
+                <option value="down">Elbow-down</option>
+                <option value="up">Elbow-up</option>
+              </select>
+            </label>
+            <div class="matrix-readout" id="analyticIkReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="analyticIkCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter6-numerical" aria-labelledby="numerical-ik-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 6.2</p>
+          <h2 id="numerical-ik-title">Numerical IK as Newton-Raphson correction</h2>
+          <p>
+            Numerical IK linearizes the pose error using the Jacobian, solves for a joint
+            correction, updates theta, and repeats until the error is small enough.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>initial theta1 <span id="numIkTheta1Label">-70 deg</span><input id="numIkTheta1" type="range" min="-170" max="170" value="-70"></label>
+            <label>initial theta2 <span id="numIkTheta2Label">80 deg</span><input id="numIkTheta2" type="range" min="-170" max="170" value="80"></label>
+            <label>iterations <span id="numIkIterationsLabel">5</span><input id="numIkIterations" type="range" min="0" max="12" value="5"></label>
+            <div class="matrix-readout" id="numericIkReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="numericIkCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter6-inverse-velocity" aria-labelledby="inverse-velocity-title">
+        <div>
+          <p class="eyebrow">Section 6.3</p>
+          <h2 id="inverse-velocity-title">Inverse velocity kinematics is the linear subproblem</h2>
+          <p>
+            Each Newton step asks for a joint change that would create a desired small
+            end-effector motion. That is the inverse velocity problem: solve
+            V = J(theta) thetadot, often with a pseudoinverse when J is not square.
+          </p>
+        </div>
+        <div class="comparison-grid">
+          <article class="concept-card">
+            <h3>Square, full rank</h3>
+            <p>thetadot = J^-1 V</p>
+          </article>
+          <article class="concept-card">
+            <h3>Redundant</h3>
+            <p>Use a pseudoinverse plus optional null-space motion.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Near singular</h3>
+            <p>Corrections can explode, so damping or step limits become practical.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter6-closed-loops" aria-labelledby="closed-loop-title">
+        <div>
+          <p class="eyebrow">Section 6.4</p>
+          <h2 id="closed-loop-title">Closed loops add constraint equations</h2>
+          <p>
+            For closed-chain mechanisms, IK must satisfy loop-closure constraints as well
+            as task goals. Chapter 6 flags this before the book turns fully to closed-chain
+            kinematics in Chapter 7.
+          </p>
+        </div>
+        <div class="formula-panel compact">
+          <p class="eyebrow">Mental model</p>
+          <strong>task error + closure error -> solve together</strong>
+          <p>
+            You are no longer only steering an open chain. Passive joints and loop
+            constraints must remain compatible.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter6-check" aria-labelledby="chapter6-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter6-quiz-title">Chapter 6 checkpoint</h2>
+          <p>These checks separate FK, IK, inverse velocity IK, and numerical iteration.</p>
+        </div>
+        <div class="quiz" id="chapter6Quiz"></div>
       </section>
       </div>
     </main>
