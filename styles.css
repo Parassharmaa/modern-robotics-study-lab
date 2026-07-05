@@ -481,6 +481,12 @@ canvas {
     #fff;
 }
 
+.chapter5-hero {
+  background:
+    linear-gradient(115deg, rgba(184, 74, 58, 0.13), rgba(255, 255, 255, 0.84) 46%),
+    #fff;
+}
+
 .chapter-hero > *,
 .roadmap-layout > *,
 .split > *,

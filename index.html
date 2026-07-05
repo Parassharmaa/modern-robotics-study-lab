@@ -18,6 +18,7 @@
         <button class="chapter-switch" data-target-chapter="2">Chapter 2</button>
         <button class="chapter-switch" data-target-chapter="3">Chapter 3</button>
         <button class="chapter-switch" data-target-chapter="4">Chapter 4</button>
+        <button class="chapter-switch" data-target-chapter="5">Chapter 5</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -674,6 +675,142 @@
           <p>These checks make sure the PoE formula is a usable recipe, not just a symbol.</p>
         </div>
         <div class="quiz" id="chapter4Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="5">
+      <section class="chapter-hero chapter5-hero" id="chapter5" aria-labelledby="chapter5-title">
+        <div>
+          <p class="kicker">Chapter 5</p>
+          <h2 id="chapter5-title">Velocity Kinematics and Statics</h2>
+          <p>
+            Chapter 5 differentiates forward kinematics. The Jacobian maps joint rates
+            to end-effector twists, reveals singularities, defines manipulability, and
+            gives the static dual relationship between endpoint wrenches and joint torques.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Two central maps</p>
+          <strong>V = J(theta) thetadot</strong>
+          <p>Statics uses the dual map: tau = J(theta)^T F.</p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter5-spine" aria-labelledby="chapter5-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter5-spine-title">What Chapter 5 covers</h2>
+          <p>
+            The Jacobian is the local linear map around the current configuration. It
+            tells you how small joint motions create task motion, how forces load the
+            joints, and when motion directions are lost.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter5Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter5-jacobian" aria-labelledby="jacobian-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 5.1</p>
+          <h2 id="jacobian-title">Jacobian velocity lab</h2>
+          <p>
+            Move the joints and joint-rate sliders. The arm pose determines the Jacobian;
+            the joint rates pass through that matrix to produce the end-effector velocity.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>theta1 <span id="jacTheta1Label">35 deg</span><input id="jacTheta1" type="range" min="-170" max="170" value="35"></label>
+            <label>theta2 <span id="jacTheta2Label">-48 deg</span><input id="jacTheta2" type="range" min="-170" max="170" value="-48"></label>
+            <label>theta1 dot <span id="jacRate1Label">0.70</span><input id="jacRate1" type="range" min="-150" max="150" value="70"></label>
+            <label>theta2 dot <span id="jacRate2Label">0.35</span><input id="jacRate2" type="range" min="-150" max="150" value="35"></label>
+            <div class="matrix-readout" id="jacobianReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="jacobianCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter5-space-body" aria-labelledby="space-body-title">
+        <div>
+          <p class="eyebrow">Space and body Jacobians</p>
+          <h2 id="space-body-title">Same twist, different coordinates</h2>
+          <p>
+            A space Jacobian expresses the end-effector twist in the fixed space frame.
+            A body Jacobian expresses the same physical twist in the end-effector frame.
+            Chapter 5 uses the adjoint from Chapter 3 to relate them.
+          </p>
+        </div>
+        <div class="comparison-grid">
+          <article class="concept-card">
+            <h3>Space Jacobian Js</h3>
+            <p>Columns are joint screw axes transformed forward by earlier joint motions.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Body Jacobian Jb</h3>
+            <p>Columns are body screw axes transformed backward by later joint motions.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Relationship</h3>
+            <p>Js(theta) = [Ad Tsb(theta)] Jb(theta)</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter5-statics" aria-labelledby="statics-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 5.2</p>
+          <h2 id="statics-title">Statics: endpoint wrench to joint torques</h2>
+          <p>
+            If the end-effector applies or feels a wrench F, the equivalent generalized
+            joint torques are tau = J^T F. This is the force-side dual of the velocity map.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>force x <span id="forceXLabel">1.20</span><input id="forceX" type="range" min="-200" max="200" value="120"></label>
+            <label>force y <span id="forceYLabel">0.70</span><input id="forceY" type="range" min="-200" max="200" value="70"></label>
+            <div class="matrix-readout" id="staticsReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="staticsCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter5-singularity" aria-labelledby="singularity-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 5.3 and 5.4</p>
+          <h2 id="singularity-title">Singularities and manipulability</h2>
+          <p>
+            Near a singularity, the Jacobian loses rank. Some task-space velocity
+            directions become hard or impossible, and endpoint force capability changes
+            dramatically. The ellipse below is drawn from J J^T for the planar arm.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <div class="preset-row">
+              <button class="singularity-preset" data-singularity="bent">Bent arm</button>
+              <button class="singularity-preset" data-singularity="straight">Straight singularity</button>
+              <button class="singularity-preset" data-singularity="folded">Folded singularity</button>
+            </div>
+            <div class="matrix-readout" id="manipReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="manipCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter5-check" aria-labelledby="chapter5-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter5-quiz-title">Chapter 5 checkpoint</h2>
+          <p>These checks keep the Jacobian connected to motion, force, and singularity intuition.</p>
+        </div>
+        <div class="quiz" id="chapter5Quiz"></div>
       </section>
       </div>
     </main>

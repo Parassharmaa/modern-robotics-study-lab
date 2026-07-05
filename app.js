@@ -543,6 +543,94 @@ const chapter4QuizItems = [
   }
 ];
 
+const chapter5Concepts = [
+  {
+    title: "Manipulator Jacobian",
+    text: "The Jacobian maps joint rates to the end-effector twist at the current configuration."
+  },
+  {
+    title: "Space Jacobian",
+    text: "The space Jacobian expresses the twist in the fixed frame and builds columns from proximal to distal joints."
+  },
+  {
+    title: "Body Jacobian",
+    text: "The body Jacobian expresses the same twist in the end-effector frame and builds columns from distal to proximal effects."
+  },
+  {
+    title: "Inverse velocity kinematics",
+    text: "If V = J thetadot, then solving for joint rates is a linear algebra problem, often using a pseudoinverse."
+  },
+  {
+    title: "Statics",
+    text: "Endpoint wrench F maps to joint torques through tau = J^T F, the dual of velocity kinematics."
+  },
+  {
+    title: "Singularities",
+    text: "At singular configurations the Jacobian loses rank, causing loss of motion directions or unbounded joint-rate demands."
+  },
+  {
+    title: "Manipulability",
+    text: "The velocity manipulability ellipsoid shows which end-effector velocity directions are easy or hard for unit joint-rate effort."
+  },
+  {
+    title: "Why it matters",
+    text: "Jacobians sit under resolved-rate control, force control, singularity avoidance, redundancy resolution, and motion planning."
+  }
+];
+
+const chapter5QuizItems = [
+  {
+    q: "What does the manipulator Jacobian map?",
+    answers: [
+      "Joint rates to an end-effector twist.",
+      "Joint torques directly to joint angles.",
+      "URDF XML to mass properties."
+    ],
+    correct: 0,
+    note: "Yes. The Jacobian is the local velocity map."
+  },
+  {
+    q: "What changes between a space Jacobian and a body Jacobian?",
+    answers: [
+      "The coordinate frame used to express the same physical twist.",
+      "The robot's number of joints.",
+      "Whether the robot has actuators."
+    ],
+    correct: 0,
+    note: "Right. Space and body Jacobians describe the same motion in different frames."
+  },
+  {
+    q: "What is the statics relationship for endpoint wrench F?",
+    answers: [
+      "tau = J^T F.",
+      "F = J^T tau always.",
+      "tau = J F."
+    ],
+    correct: 0,
+    note: "Exactly. The transpose maps endpoint wrench to generalized joint torques."
+  },
+  {
+    q: "What happens at a singularity?",
+    answers: [
+      "The Jacobian loses rank and some task velocity directions are lost.",
+      "All links become massless.",
+      "Forward kinematics stops existing."
+    ],
+    correct: 0,
+    note: "Good. The pose still exists, but the local velocity map loses directions."
+  },
+  {
+    q: "What does a manipulability ellipse visualize?",
+    answers: [
+      "The endpoint velocity directions produced by bounded joint rates.",
+      "The robot's collision geometry.",
+      "Only the endpoint force direction."
+    ],
+    correct: 0,
+    note: "Yes. Long axes are easy velocity directions; short axes are hard directions."
+  }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -611,6 +699,24 @@ const fkReadout = document.querySelector("#fkReadout");
 const fkCanvas = document.querySelector("#fkCanvas");
 const screwReadout = document.querySelector("#screwReadout");
 const screwCanvas = document.querySelector("#screwCanvas");
+const jacTheta1 = document.querySelector("#jacTheta1");
+const jacTheta2 = document.querySelector("#jacTheta2");
+const jacRate1 = document.querySelector("#jacRate1");
+const jacRate2 = document.querySelector("#jacRate2");
+const jacTheta1Label = document.querySelector("#jacTheta1Label");
+const jacTheta2Label = document.querySelector("#jacTheta2Label");
+const jacRate1Label = document.querySelector("#jacRate1Label");
+const jacRate2Label = document.querySelector("#jacRate2Label");
+const jacobianReadout = document.querySelector("#jacobianReadout");
+const jacobianCanvas = document.querySelector("#jacobianCanvas");
+const forceX = document.querySelector("#forceX");
+const forceY = document.querySelector("#forceY");
+const forceXLabel = document.querySelector("#forceXLabel");
+const forceYLabel = document.querySelector("#forceYLabel");
+const staticsReadout = document.querySelector("#staticsReadout");
+const staticsCanvas = document.querySelector("#staticsCanvas");
+const manipReadout = document.querySelector("#manipReadout");
+const manipCanvas = document.querySelector("#manipCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -1569,6 +1675,158 @@ function renderPoeSteps() {
   `).join("");
 }
 
+function renderChapter5Concepts() {
+  const el = document.querySelector("#chapter5Concepts");
+  el.innerHTML = chapter5Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function getJacobianState() {
+  const t1 = Number(jacTheta1.value);
+  const t2 = Number(jacTheta2.value);
+  const r1 = Number(jacRate1.value) / 100;
+  const r2 = Number(jacRate2.value) / 100;
+  const l1 = 128;
+  const l2 = 102;
+  const a1 = degToRad(t1);
+  const a12 = degToRad(t1 + t2);
+  const p0 = { x: 0, y: 0 };
+  const p1 = { x: l1 * Math.cos(a1), y: l1 * Math.sin(a1) };
+  const p2 = { x: p1.x + l2 * Math.cos(a12), y: p1.y + l2 * Math.sin(a12) };
+  const j = [
+    [-l1 * Math.sin(a1) - l2 * Math.sin(a12), -l2 * Math.sin(a12)],
+    [l1 * Math.cos(a1) + l2 * Math.cos(a12), l2 * Math.cos(a12)]
+  ];
+  const v = {
+    x: j[0][0] * r1 + j[0][1] * r2,
+    y: j[1][0] * r1 + j[1][1] * r2
+  };
+  const det = j[0][0] * j[1][1] - j[0][1] * j[1][0];
+  return { t1, t2, r1, r2, l1, l2, p0, p1, p2, j, v, det };
+}
+
+function drawJacobianArm(ctx, w, h, state, options = {}) {
+  const base = { x: w / 2 - 80, y: h / 2 + 72 };
+  const pts = [state.p0, state.p1, state.p2].map((p) => ({ x: base.x + p.x, y: base.y - p.y }));
+  ctx.strokeStyle = "rgba(35, 100, 170, 0.16)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(base.x, base.y, state.l1 + state.l2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineCap = "round";
+  ctx.lineWidth = 12;
+  ctx.strokeStyle = "#2364aa";
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.stroke();
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.beginPath();
+  ctx.moveTo(pts[1].x, pts[1].y);
+  ctx.lineTo(pts[2].x, pts[2].y);
+  ctx.stroke();
+  pts.forEach((p, i) => {
+    ctx.fillStyle = i === 2 ? "#b84a3a" : "#fff";
+    ctx.strokeStyle = "#16202a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, i === 2 ? 9 : 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  if (options.velocity) {
+    ctx.strokeStyle = "#b84a3a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(pts[2].x, pts[2].y);
+    ctx.lineTo(pts[2].x + state.v.x * 0.42, pts[2].y - state.v.y * 0.42);
+    ctx.stroke();
+    ctx.fillStyle = "#5a6875";
+    ctx.fillText("end-effector velocity", pts[2].x + 10, pts[2].y - 18);
+  }
+  return pts;
+}
+
+function drawJacobianLab() {
+  const s = getJacobianState();
+  jacTheta1Label.textContent = `${s.t1} deg`;
+  jacTheta2Label.textContent = `${s.t2} deg`;
+  jacRate1Label.textContent = fmt(s.r1);
+  jacRate2Label.textContent = fmt(s.r2);
+  jacobianReadout.innerHTML = `<strong>Planar position Jacobian</strong>${matrixHtml(s.j.map((row) => row.map(fmt)))}
+    <p>thetadot = (${fmt(s.r1)}, ${fmt(s.r2)}) gives v = (${fmt(s.v.x)}, ${fmt(s.v.y)}).</p>
+    <p>det(J) = ${fmt(s.det)}. Near zero means the arm is close to a singularity.</p>`;
+  const { ctx, w, h } = setupCanvas(jacobianCanvas);
+  grid(ctx, w, h);
+  drawJacobianArm(ctx, w, h, s, { velocity: true });
+}
+
+function drawStaticsLab() {
+  const s = getJacobianState();
+  const fx = Number(forceX.value) / 100;
+  const fy = Number(forceY.value) / 100;
+  forceXLabel.textContent = fmt(fx);
+  forceYLabel.textContent = fmt(fy);
+  const tau1 = s.j[0][0] * fx + s.j[1][0] * fy;
+  const tau2 = s.j[0][1] * fx + s.j[1][1] * fy;
+  staticsReadout.innerHTML = `<strong>tau = J^T F</strong>
+    <p>F = (${fmt(fx)}, ${fmt(fy)}) gives tau = (${fmt(tau1)}, ${fmt(tau2)}).</p>
+    <p>The transpose appears because virtual power must match: F dot v = tau dot thetadot.</p>`;
+  const { ctx, w, h } = setupCanvas(staticsCanvas);
+  grid(ctx, w, h);
+  const pts = drawJacobianArm(ctx, w, h, s);
+  const tip = pts[2];
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(tip.x, tip.y);
+  ctx.lineTo(tip.x + fx * 58, tip.y - fy * 58);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("endpoint force F", tip.x + 10, tip.y - 20);
+}
+
+function manipulabilityAxes(j) {
+  const a = j[0][0] * j[0][0] + j[0][1] * j[0][1];
+  const b = j[0][0] * j[1][0] + j[0][1] * j[1][1];
+  const d = j[1][0] * j[1][0] + j[1][1] * j[1][1];
+  const tr = a + d;
+  const disc = Math.sqrt(Math.max(0, (a - d) * (a - d) + 4 * b * b));
+  const lambda1 = (tr + disc) / 2;
+  const lambda2 = (tr - disc) / 2;
+  const angle = Math.atan2(lambda1 - a, b || 0.0001);
+  return { major: Math.sqrt(Math.max(lambda1, 0)), minor: Math.sqrt(Math.max(lambda2, 0)), angle };
+}
+
+function drawManipulabilityLab() {
+  const s = getJacobianState();
+  const axes = manipulabilityAxes(s.j);
+  const condition = axes.minor < 0.001 ? "singular" : fmt(axes.major / axes.minor);
+  manipReadout.innerHTML = `<strong>Velocity manipulability</strong>
+    <p>major axis = ${fmt(axes.major)}, minor axis = ${fmt(axes.minor)}, condition ratio = ${condition}.</p>
+    <p>det(J) = ${fmt(s.det)}. The ellipse collapses when the Jacobian loses rank.</p>`;
+  const { ctx, w, h } = setupCanvas(manipCanvas);
+  grid(ctx, w, h);
+  const pts = drawJacobianArm(ctx, w, h, s);
+  const tip = pts[2];
+  const scale = 0.56;
+  ctx.save();
+  ctx.translate(tip.x, tip.y);
+  ctx.rotate(-axes.angle);
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, Math.max(4, axes.major * scale), Math.max(2, axes.minor * scale), 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("velocity manipulability ellipse", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -1592,6 +1850,11 @@ function redrawActiveChapter() {
   if (active === "4") {
     drawPlanarFk();
     drawScrewAxisLab();
+  }
+  if (active === "5") {
+    drawJacobianLab();
+    drawStaticsLab();
+    drawManipulabilityLab();
   }
 }
 
@@ -1630,6 +1893,14 @@ const navLinksByChapter = {
     ["Body", "#chapter4-body"],
     ["URDF", "#chapter4-urdf"],
     ["Check", "#chapter4-check"]
+  ],
+  "5": [
+    ["Spine", "#chapter5-spine"],
+    ["Jacobian", "#chapter5-jacobian"],
+    ["Frames", "#chapter5-space-body"],
+    ["Statics", "#chapter5-statics"],
+    ["Singularities", "#chapter5-singularity"],
+    ["Check", "#chapter5-check"]
   ]
 };
 
@@ -1695,6 +1966,31 @@ twistPitch.addEventListener("input", drawTwistLab);
 fkTheta1.addEventListener("input", drawPlanarFk);
 fkTheta2.addEventListener("input", drawPlanarFk);
 fkTheta3.addEventListener("input", drawPlanarFk);
+[jacTheta1, jacTheta2, jacRate1, jacRate2].forEach((input) => {
+  input.addEventListener("input", () => {
+    drawJacobianLab();
+    drawStaticsLab();
+    drawManipulabilityLab();
+  });
+});
+[forceX, forceY].forEach((input) => input.addEventListener("input", drawStaticsLab));
+document.querySelectorAll(".singularity-preset").forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.dataset.singularity === "straight") {
+      jacTheta1.value = "0";
+      jacTheta2.value = "0";
+    } else if (button.dataset.singularity === "folded") {
+      jacTheta1.value = "0";
+      jacTheta2.value = "180";
+    } else {
+      jacTheta1.value = "35";
+      jacTheta2.value = "-48";
+    }
+    drawJacobianLab();
+    drawStaticsLab();
+    drawManipulabilityLab();
+  });
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -1710,5 +2006,7 @@ renderGenericQuiz("#chapter3Quiz", chapter3QuizItems, "Not quite. Chapter 3 is c
 renderChapter4Concepts();
 renderPoeSteps();
 renderGenericQuiz("#chapter4Quiz", chapter4QuizItems, "Not quite. Chapter 4 is about mapping known joint values forward to a pose; compare this with the PoE recipe above.");
+renderChapter5Concepts();
+renderGenericQuiz("#chapter5Quiz", chapter5QuizItems, "Not quite. Return to the Jacobian map and ask whether this option describes motion, force, or singularity behavior.");
 setChapter("1");
 drawArm();
