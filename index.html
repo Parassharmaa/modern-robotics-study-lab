@@ -30,6 +30,7 @@
         <button class="chapter-switch" data-target-chapter="A">Appendix A</button>
         <button class="chapter-switch" data-target-chapter="B">Appendix B</button>
         <button class="chapter-switch" data-target-chapter="C">Appendix C</button>
+        <button class="chapter-switch" data-target-chapter="D">Appendix D</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -2196,6 +2197,90 @@
           <p>These checks test D-H frame assignment, parameter meaning, special cases, and relation to PoE.</p>
         </div>
         <div class="quiz" id="appendixCQuiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="D">
+      <section class="chapter-hero appendixD-hero" id="appendixD" aria-labelledby="appendixD-title">
+        <div>
+          <p class="kicker">Appendix D</p>
+          <h2 id="appendixD-title">Optimization and Lagrange Multipliers</h2>
+          <p>
+            Appendix D gives the optimization facts used throughout robotics:
+            gradients identify stationary points, least squares leads to normal
+            equations, and equality constraints introduce Lagrange multipliers.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Equality-constrained stationarity</p>
+          <strong>grad f(x*) + (dg/dx)^T lambda* = 0, g(x*) = 0</strong>
+          <p>
+            At a constrained local minimum, the objective gradient is balanced by
+            a weighted combination of constraint normals.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="appendixD-spine" aria-labelledby="appendixD-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Optimization map</p>
+          <h2 id="appendixD-spine-title">What Appendix D covers</h2>
+          <p>
+            This appendix is short but important: it connects calculus, least
+            squares, rank assumptions, regular constraints, and quadratic programs.
+          </p>
+        </div>
+        <div class="concept-grid" id="appendixDConcepts"></div>
+      </section>
+
+      <section class="band" id="appendixD-lab" aria-labelledby="lagrange-lab-title">
+        <div class="section-head">
+          <p class="eyebrow">Interactive constraint lab</p>
+          <h2 id="lagrange-lab-title">See a Lagrange multiplier as a balancing force</h2>
+          <p>
+            Minimize a circular bowl f(x,y) = (x - cx)^2 + (y - cy)^2 while staying
+            on the equality constraint g(x,y) = x^2 + y^2 - r^2 = 0. The best
+            feasible point is where grad f is parallel to the constraint normal.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>unconstrained cx <span id="optCxLabel">0.90</span><input id="optCx" type="range" min="-1.8" max="1.8" step="0.05" value="0.9"></label>
+            <label>unconstrained cy <span id="optCyLabel">0.65</span><input id="optCy" type="range" min="-1.8" max="1.8" step="0.05" value="0.65"></label>
+            <label>constraint radius r <span id="optRadiusLabel">1.20</span><input id="optRadius" type="range" min="0.45" max="1.9" step="0.05" value="1.2"></label>
+            <div class="matrix-readout" id="optimizationReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="optimizationCanvas" width="620" height="380"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="appendixD-quadratic" aria-labelledby="appendixD-quadratic-title">
+        <div class="section-head">
+          <p class="eyebrow">Robotics pattern</p>
+          <h2 id="appendixD-quadratic-title">Why these equations keep appearing</h2>
+          <p>
+            Many robotics problems are "make an error small, while obeying
+            constraints." Appendix D gives the algebraic skeleton behind those
+            solvers.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Least squares</h3><p>When Ax = b has no exact solution, minimize 0.5 ||Ax - b||^2 and solve A^T A x = A^T b when A has full column rank.</p></article>
+          <article class="task-card"><h3>Inverse kinematics</h3><p>Numerical IK often solves a least-squares correction, then adds constraints for joint limits, contacts, or task priorities.</p></article>
+          <article class="task-card"><h3>Constrained dynamics</h3><p>Contact constraints introduce unknown multipliers that act like forces enforcing no-slip or no-penetration conditions.</p></article>
+          <article class="task-card"><h3>Quadratic programs</h3><p>For 0.5 x^T Q x + c^T x subject to Ax = b, stationarity and feasibility form a coupled linear system in x and lambda.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="appendixD-check" aria-labelledby="appendixD-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="appendixD-quiz-title">Appendix D checkpoint</h2>
+          <p>These checks test gradients, least squares, regular constraints, multipliers, and equality-constrained quadratic programs.</p>
+        </div>
+        <div class="quiz" id="appendixDQuiz"></div>
       </section>
       </div>
     </main>

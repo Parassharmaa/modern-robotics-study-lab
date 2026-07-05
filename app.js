@@ -1081,6 +1081,30 @@ const appendixCQuizItems = [
   { q: "How is D-H different from PoE?", answers: ["D-H builds a table of adjacent-frame transforms; PoE uses screw axes and a home pose.", "They are the same notation exactly.", "PoE cannot do forward kinematics."], correct: 0, note: "Good. They are two valid forward-kinematics representations with different ingredients." }
 ];
 
+const appendixDConcepts = [
+  { title: "Local minimum", text: "A point x* is a local minimum if nearby points have objective value at least f(x*)." },
+  { title: "First derivative test", text: "For one variable, a twice-differentiable local minimum must have df/dx = 0." },
+  { title: "Second derivative clue", text: "At a one-dimensional local minimum, d2f/dx2 is nonnegative; curvature helps separate minima from maxima." },
+  { title: "Gradient condition", text: "For f: R^n -> R, the first-order necessary condition is grad f(x*) = 0." },
+  { title: "Least squares", text: "When Ax = b is overconstrained, minimize 0.5 ||Ax - b||^2 instead of demanding an exact solution." },
+  { title: "Normal equations", text: "Least squares gives A^T A x = A^T b, and full column rank makes A^T A invertible." },
+  { title: "Equality constraint", text: "A feasible point must satisfy g(x) = 0; the optimization only searches along that constraint surface." },
+  { title: "Regular point", text: "The constraint Jacobian dg/dx must have rank m so the constraint surface has well-defined normals." },
+  { title: "Lagrange multiplier", text: "lambda weights the constraint normals so they can balance the objective gradient at a feasible optimum." },
+  { title: "Unknown count", text: "The equations grad f + (dg/dx)^T lambda = 0 and g(x) = 0 give n + m equations in x and lambda." },
+  { title: "Quadratic program", text: "For 0.5 x^T Q x + c^T x subject to Ax = b, stationarity is Qx + A^T lambda = -c." },
+  { title: "Robotics use", text: "These conditions appear in IK, trajectory optimization, contact forces, grasp analysis, and constrained dynamics." }
+];
+
+const appendixDQuizItems = [
+  { q: "What first-order condition must an unconstrained local minimum satisfy?", answers: ["grad f(x*) = 0.", "g(x*) must be nonzero.", "A must have more columns than rows."], correct: 0, note: "Correct. The gradient must vanish at an unconstrained smooth local minimum." },
+  { q: "Why does least squares solve A^T A x = A^T b?", answers: ["It sets the gradient of 0.5 ||Ax - b||^2 to zero.", "It makes every residual equal one.", "It removes the objective function."], correct: 0, note: "Yes. The normal equations are the stationarity condition for the squared residual." },
+  { q: "What rank condition does Appendix D require for equality constraints?", answers: ["rank(dg/dx at x*) = m.", "rank(dg/dx at x*) = 0.", "rank(Q) must be negative."], correct: 0, note: "Right. A regular point has independent constraint gradients." },
+  { q: "In grad f + (dg/dx)^T lambda = 0, what does lambda do?", answers: ["It weights constraint normals so they balance grad f.", "It rotates the robot base.", "It deletes the feasibility equations."], correct: 0, note: "Exactly. Multipliers are the weights on the constraint-gradient directions." },
+  { q: "For min 0.5 x^T Q x + c^T x subject to Ax = b, what is stationarity?", answers: ["Qx + A^T lambda = -c.", "Ax = 0 only.", "Q must equal A."], correct: 0, note: "Good. Feasibility Ax = b must also hold." },
+  { q: "Why does this appendix matter for robotics?", answers: ["Many robot solvers minimize error while enforcing constraints.", "Robots never use constraints.", "It replaces kinematics with D-H tables only."], correct: 0, note: "Yes. It is the small mathematical engine behind many optimization-based robotics methods." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1338,6 +1362,14 @@ const dhDLabel = document.querySelector("#dhDLabel");
 const dhPhiLabel = document.querySelector("#dhPhiLabel");
 const dhReadout = document.querySelector("#dhReadout");
 const dhCanvas = document.querySelector("#dhCanvas");
+const optCx = document.querySelector("#optCx");
+const optCy = document.querySelector("#optCy");
+const optRadius = document.querySelector("#optRadius");
+const optCxLabel = document.querySelector("#optCxLabel");
+const optCyLabel = document.querySelector("#optCyLabel");
+const optRadiusLabel = document.querySelector("#optRadiusLabel");
+const optimizationReadout = document.querySelector("#optimizationReadout");
+const optimizationCanvas = document.querySelector("#optimizationCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -4083,6 +4115,145 @@ function drawDhLab() {
   ctx.fillText(`alpha twists z axes by ${Number(dhAlpha.value)} deg; phi rotates x_i by ${Number(dhPhi.value)} deg`, 28, 56);
 }
 
+function renderAppendixDConcepts() {
+  const el = document.querySelector("#appendixDConcepts");
+  el.innerHTML = appendixDConcepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function drawOptimizationLab() {
+  const cx = Number(optCx.value);
+  const cy = Number(optCy.value);
+  const radius = Number(optRadius.value);
+  const centerNorm = Math.max(Math.hypot(cx, cy), 0.001);
+  const constrained = {
+    x: (radius * cx) / centerNorm,
+    y: (radius * cy) / centerNorm
+  };
+  const gradF = {
+    x: 2 * (constrained.x - cx),
+    y: 2 * (constrained.y - cy)
+  };
+  const gradG = {
+    x: 2 * constrained.x,
+    y: 2 * constrained.y
+  };
+  const gradGNormSq = gradG.x * gradG.x + gradG.y * gradG.y;
+  const lambda = -(gradF.x * gradG.x + gradF.y * gradG.y) / gradGNormSq;
+  const residual = {
+    x: gradF.x + lambda * gradG.x,
+    y: gradF.y + lambda * gradG.y
+  };
+  const residualNorm = Math.hypot(residual.x, residual.y);
+  const objective = (constrained.x - cx) ** 2 + (constrained.y - cy) ** 2;
+  const feasibility = constrained.x ** 2 + constrained.y ** 2 - radius ** 2;
+
+  optCxLabel.textContent = fmt(cx);
+  optCyLabel.textContent = fmt(cy);
+  optRadiusLabel.textContent = fmt(radius);
+  optimizationReadout.innerHTML = `<strong>Projection onto g(x,y) = x^2 + y^2 - r^2 = 0</strong>
+    <p>x* = (${fmt(constrained.x)}, ${fmt(constrained.y)})</p>
+    <p>f(x*) = ${fmt(objective)}; g(x*) = ${fmt(feasibility)}</p>
+    <p>lambda = ${fmt(lambda)}; ||grad f + lambda grad g|| = ${fmt(residualNorm)}</p>
+    <p>As the unconstrained minimum moves, the feasible optimum remains on the circle and the gradients stay parallel.</p>`;
+
+  const { ctx, w, h } = setupCanvas(optimizationCanvas);
+  grid(ctx, w, h);
+  const span = 2.35;
+  const scale = Math.min(w, h) / (2 * span);
+  const origin = { x: w / 2, y: h / 2 + 8 };
+  const toCanvas = (p) => ({ x: origin.x + p.x * scale, y: origin.y - p.y * scale });
+
+  ctx.strokeStyle = "#dde5ec";
+  ctx.lineWidth = 1;
+  for (let gx = -2; gx <= 2; gx += 1) {
+    const a = toCanvas({ x: gx, y: -2.2 });
+    const b = toCanvas({ x: gx, y: 2.2 });
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+  for (let gy = -2; gy <= 2; gy += 1) {
+    const a = toCanvas({ x: -2.2, y: gy });
+    const b = toCanvas({ x: 2.2, y: gy });
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+
+  [0.28, 0.58, 0.9, 1.25, 1.62].forEach((contourRadius, index) => {
+    const c = toCanvas({ x: cx, y: cy });
+    ctx.strokeStyle = `rgba(35, 100, 170, ${0.24 + index * 0.08})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, contourRadius * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  const constraintCenter = toCanvas({ x: 0, y: 0 });
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(constraintCenter.x, constraintCenter.y, radius * scale, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const unconstrainedPoint = toCanvas({ x: cx, y: cy });
+  const constrainedPoint = toCanvas(constrained);
+  ctx.fillStyle = "#2364aa";
+  ctx.beginPath();
+  ctx.arc(unconstrainedPoint.x, unconstrainedPoint.y, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#b84a3a";
+  ctx.beginPath();
+  ctx.arc(constrainedPoint.x, constrainedPoint.y, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  const gradScale = 0.34;
+  const normalScale = 0.22;
+  drawArrow(ctx, constrainedPoint, toCanvas({
+    x: constrained.x + gradF.x * gradScale,
+    y: constrained.y + gradF.y * gradScale
+  }), "#b84a3a", 4);
+  drawArrow(ctx, constrainedPoint, toCanvas({
+    x: constrained.x + gradG.x * normalScale,
+    y: constrained.y + gradG.y * normalScale
+  }), "#2a8c6d", 4);
+  ctx.strokeStyle = "#6e5bbf";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  ctx.moveTo(unconstrainedPoint.x, unconstrainedPoint.y);
+  ctx.lineTo(constrainedPoint.x, constrainedPoint.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const tangentWorld = { x: -constrained.y / radius, y: constrained.x / radius };
+  const tangentA = toCanvas({ x: constrained.x - tangentWorld.x * 0.45, y: constrained.y - tangentWorld.y * 0.45 });
+  const tangentB = toCanvas({ x: constrained.x + tangentWorld.x * 0.45, y: constrained.y + tangentWorld.y * 0.45 });
+  ctx.strokeStyle = "#d39b25";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(tangentA.x, tangentA.y);
+  ctx.lineTo(tangentB.x, tangentB.y);
+  ctx.stroke();
+
+  ctx.fillStyle = "#16202a";
+  ctx.font = "13px system-ui, sans-serif";
+  ctx.fillText("blue dot: unconstrained minimum", 24, 32);
+  ctx.fillStyle = "#b84a3a";
+  ctx.fillText("red dot: feasible minimum x*", 24, 54);
+  ctx.fillStyle = "#2a8c6d";
+  ctx.fillText("green arrow: constraint normal grad g", 24, 76);
+  ctx.fillStyle = "#b84a3a";
+  ctx.fillText("red arrow: objective gradient grad f", 24, 98);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -4157,6 +4328,9 @@ function redrawActiveChapter() {
   }
   if (active === "C") {
     drawDhLab();
+  }
+  if (active === "D") {
+    drawOptimizationLab();
   }
 }
 
@@ -4298,6 +4472,12 @@ const navLinksByChapter = {
     ["D-H Row", "#appendixC-lab"],
     ["Cases", "#appendixC-cases"],
     ["Check", "#appendixC-check"]
+  ],
+  "D": [
+    ["Map", "#appendixD-spine"],
+    ["Multiplier", "#appendixD-lab"],
+    ["QP", "#appendixD-quadratic"],
+    ["Check", "#appendixD-check"]
   ]
 };
 
@@ -4463,6 +4643,9 @@ contactTwistMode.addEventListener("change", applyContactTwistPreset);
 [dhAlpha, dhA, dhD, dhPhi].forEach((input) => {
   input.addEventListener("input", drawDhLab);
 });
+[optCx, optCy, optRadius].forEach((input) => {
+  input.addEventListener("input", drawOptimizationLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -4502,5 +4685,7 @@ renderAppendixBConcepts();
 renderGenericQuiz("#appendixBQuiz", appendixBQuizItems, "Not quite. Appendix B compares orientation representations; ask whether the issue is interpretation, singularity, double cover, or direct matrix action.");
 renderAppendixCConcepts();
 renderGenericQuiz("#appendixCQuiz", appendixCQuizItems, "Not quite. Appendix C is about D-H frame assignment: identify the joint axis, mutual perpendicular, variable parameter, and transform order.");
+renderAppendixDConcepts();
+renderGenericQuiz("#appendixDQuiz", appendixDQuizItems, "Not quite. Appendix D is about first-order optimality: ask what is being minimized, which constraints must hold, and what balances the gradient.");
 setChapter("1");
 drawArm();
