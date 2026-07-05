@@ -469,6 +469,12 @@ canvas {
     #fff;
 }
 
+.chapter3-hero {
+  background:
+    linear-gradient(115deg, rgba(35, 100, 170, 0.13), rgba(255, 255, 255, 0.83) 46%),
+    #fff;
+}
+
 .chapter-hero > *,
 .roadmap-layout > *,
 .split > *,
@@ -507,7 +513,8 @@ canvas {
 
 .dof-lab,
 .calc-grid,
-.topology-lab {
+.topology-lab,
+.motion-lab {
   display: grid;
   grid-template-columns: minmax(280px, 0.72fr) minmax(340px, 1.28fr);
   gap: 20px;
@@ -563,6 +570,44 @@ canvas {
 
 .visual-panel canvas {
   height: auto;
+}
+
+.matrix-readout {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: #fbfdff;
+  color: var(--muted);
+  overflow-x: auto;
+}
+
+.matrix-readout strong {
+  color: var(--ink);
+}
+
+.matrix-readout p {
+  margin: 0;
+}
+
+.mini-matrix {
+  width: max-content;
+  border-collapse: collapse;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+}
+
+.mini-matrix td {
+  min-width: 58px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  text-align: right;
+  background: #fff;
+}
+
+.formula-panel.compact strong {
+  font-size: clamp(1.2rem, 2.1vw, 1.9rem);
 }
 
 .joint-table-wrap {
@@ -729,7 +774,8 @@ code {
   .chapter-hero,
   .dof-lab,
   .calc-grid,
-  .topology-lab {
+  .topology-lab,
+  .motion-lab {
     grid-template-columns: 1fr;
   }
 

@@ -339,6 +339,112 @@ const chapter2QuizItems = [
   }
 ];
 
+const chapter3Concepts = [
+  {
+    title: "Planar rigid-body motion",
+    text: "A planar pose uses two position coordinates and one orientation angle. The same transform can move a body or convert coordinates between frames."
+  },
+  {
+    title: "Rotation matrices",
+    text: "A rotation matrix R in SO(3) has orthonormal columns, determinant 1, and inverse equal to transpose. Its columns are one frame's axes written in another frame."
+  },
+  {
+    title: "Angular velocity",
+    text: "Angular velocity can be expressed in space or body coordinates. The skew matrix [omega] represents the cross-product operation."
+  },
+  {
+    title: "Exponential coordinates for rotation",
+    text: "A rotation can be represented by a unit axis omega-hat and an angle theta. Rodrigues' formula turns [omega]theta into R."
+  },
+  {
+    title: "Homogeneous transforms",
+    text: "A matrix T in SE(3) packages R and p, making pose composition, inverse transforms, and point transformations one consistent operation."
+  },
+  {
+    title: "Twists",
+    text: "A twist V = (omega, v) is the six-vector velocity of a rigid body. Revolute, prismatic, and helical motions all fit the same representation."
+  },
+  {
+    title: "Adjoint transforms",
+    text: "The adjoint representation changes twist coordinates from one frame to another without changing the physical motion."
+  },
+  {
+    title: "Screw motions",
+    text: "Finite rigid-body motions can be described as rotation about and translation along a screw axis. This is the geometric meaning of exp([S]theta)."
+  },
+  {
+    title: "Wrenches",
+    text: "A wrench combines moment and force. Wrenches transform dual to twists, and their dot product with twists gives mechanical power."
+  },
+  {
+    title: "Why this chapter matters",
+    text: "Forward kinematics, Jacobians, statics, inverse kinematics, dynamics, and control all reuse these representations."
+  }
+];
+
+const chapter3QuizItems = [
+  {
+    q: "What does a rotation matrix represent in Chapter 3?",
+    answers: [
+      "An orientation, with orthonormal columns and determinant 1.",
+      "Only an angular velocity.",
+      "A force and moment pair."
+    ],
+    correct: 0,
+    note: "Yes. A rotation matrix is an orientation representation in SO(3), and it also maps coordinates between frames."
+  },
+  {
+    q: "Why is R inverse equal to R transpose for a rotation matrix?",
+    answers: [
+      "Its columns form an orthonormal basis.",
+      "Its entries must all be positive.",
+      "It is always diagonal."
+    ],
+    correct: 0,
+    note: "Right. Orthogonality gives R^T R = I, so R^T is the inverse."
+  },
+  {
+    q: "What does the bracket operator [omega] do?",
+    answers: [
+      "It turns omega into a skew-symmetric matrix so [omega]p = omega cross p.",
+      "It extracts a translation vector from T.",
+      "It computes determinant 1."
+    ],
+    correct: 0,
+    note: "Exactly. This is why angular velocity can appear naturally inside matrix equations."
+  },
+  {
+    q: "What is stored in a homogeneous transformation T in SE(3)?",
+    answers: [
+      "A rotation R and position p packaged in a 4 by 4 matrix.",
+      "Only three Euler angles.",
+      "Only a six-dimensional velocity."
+    ],
+    correct: 0,
+    note: "Good. T = (R, p) is the basic rigid-body pose object."
+  },
+  {
+    q: "What is a twist?",
+    answers: [
+      "A six-vector rigid-body velocity, usually written V = (omega, v).",
+      "A matrix of joint limits.",
+      "A scalar path length."
+    ],
+    correct: 0,
+    note: "Yes. Twists are the velocity-side partner of rigid-body transformations."
+  },
+  {
+    q: "Why do wrenches pair naturally with twists?",
+    answers: [
+      "Their dot product gives power.",
+      "Both are always unit length.",
+      "Both are only planar quantities."
+    ],
+    correct: 0,
+    note: "Right. Moment with angular velocity plus force with linear velocity is mechanical power."
+  }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -364,9 +470,50 @@ const topologyText = document.querySelector("#topologyText");
 const topologyCanvas = document.querySelector("#topologyCanvas");
 const constraintCanvas = document.querySelector("#constraintCanvas");
 const constraintText = document.querySelector("#constraintText");
+const planeX = document.querySelector("#planeX");
+const planeY = document.querySelector("#planeY");
+const planeTheta = document.querySelector("#planeTheta");
+const planeXLabel = document.querySelector("#planeXLabel");
+const planeYLabel = document.querySelector("#planeYLabel");
+const planeThetaLabel = document.querySelector("#planeThetaLabel");
+const planeCanvas = document.querySelector("#planeCanvas");
+const planeMatrix = document.querySelector("#planeMatrix");
+const rotAxis = document.querySelector("#rotAxis");
+const rotAngle = document.querySelector("#rotAngle");
+const rotAngleLabel = document.querySelector("#rotAngleLabel");
+const rotationCanvas = document.querySelector("#rotationCanvas");
+const rotationMatrix = document.querySelector("#rotationMatrix");
+const rotationNote = document.querySelector("#rotationNote");
+const angularCanvas = document.querySelector("#angularCanvas");
+const skewMatrix = document.querySelector("#skewMatrix");
+const se3X = document.querySelector("#se3X");
+const se3Y = document.querySelector("#se3Y");
+const se3Yaw = document.querySelector("#se3Yaw");
+const se3XLabel = document.querySelector("#se3XLabel");
+const se3YLabel = document.querySelector("#se3YLabel");
+const se3YawLabel = document.querySelector("#se3YawLabel");
+const se3Canvas = document.querySelector("#se3Canvas");
+const se3Matrix = document.querySelector("#se3Matrix");
+const twistMode = document.querySelector("#twistMode");
+const twistTheta = document.querySelector("#twistTheta");
+const twistPitch = document.querySelector("#twistPitch");
+const twistThetaLabel = document.querySelector("#twistThetaLabel");
+const twistPitchLabel = document.querySelector("#twistPitchLabel");
+const twistCanvas = document.querySelector("#twistCanvas");
+const twistReadout = document.querySelector("#twistReadout");
+const wrenchCanvas = document.querySelector("#wrenchCanvas");
+const wrenchPower = document.querySelector("#wrenchPower");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
+}
+
+function fmt(value) {
+  return Math.abs(value) < 0.0005 ? "0.000" : value.toFixed(3);
+}
+
+function matrixHtml(rows) {
+  return `<table class="mini-matrix">${rows.map((row) => `<tr>${row.map((value) => `<td>${value}</td>`).join("")}</tr>`).join("")}</table>`;
 }
 
 function getArmState() {
@@ -923,6 +1070,274 @@ function renderTaskCards() {
   `).join("");
 }
 
+function renderChapter3Concepts() {
+  const el = document.querySelector("#chapter3Concepts");
+  el.innerHTML = chapter3Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function drawFrame2d(ctx, x, y, angle, label, scale = 72) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#b84a3a";
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + c * scale, y - s * scale);
+  ctx.stroke();
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - s * scale, y - c * scale);
+  ctx.stroke();
+  ctx.fillStyle = "#16202a";
+  ctx.beginPath();
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = "13px system-ui";
+  ctx.fillText(label, x + 8, y - 8);
+}
+
+function drawPlaneMotion() {
+  const x = Number(planeX.value);
+  const y = Number(planeY.value);
+  const theta = Number(planeTheta.value);
+  planeXLabel.textContent = String(x);
+  planeYLabel.textContent = String(y);
+  planeThetaLabel.textContent = `${theta} deg`;
+  const r = degToRad(theta);
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  planeMatrix.innerHTML = `<strong>T in SE(2)</strong>${matrixHtml([
+    [fmt(c), fmt(-s), x],
+    [fmt(s), fmt(c), y],
+    ["0", "0", "1"]
+  ])}<p>The first two columns are rotated body axes; the last column is the frame origin.</p>`;
+
+  const { ctx, w, h } = setupCanvas(planeCanvas);
+  grid(ctx, w, h);
+  const ox = w / 2;
+  const oy = h / 2 + 40;
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(35, oy);
+  ctx.lineTo(w - 35, oy);
+  ctx.moveTo(ox, h - 28);
+  ctx.lineTo(ox, 28);
+  ctx.stroke();
+  drawFrame2d(ctx, ox, oy, 0, "{s}", 70);
+  drawFrame2d(ctx, ox + x, oy - y, r, "{b}", 80);
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox + x, oy - y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function axisVector(name) {
+  if (name === "x") return [1, 0, 0];
+  if (name === "y") return [0, 1, 0];
+  if (name === "diag") {
+    const v = 1 / Math.sqrt(3);
+    return [v, v, v];
+  }
+  return [0, 0, 1];
+}
+
+function rotationFromAxisAngle(axis, theta) {
+  const [x, y, z] = axis;
+  const c = Math.cos(theta);
+  const s = Math.sin(theta);
+  const C = 1 - c;
+  return [
+    [c + x * x * C, x * y * C - z * s, x * z * C + y * s],
+    [y * x * C + z * s, c + y * y * C, y * z * C - x * s],
+    [z * x * C - y * s, z * y * C + x * s, c + z * z * C]
+  ];
+}
+
+function drawRotationLab() {
+  const axis = axisVector(rotAxis.value);
+  const angle = Number(rotAngle.value);
+  const theta = degToRad(angle);
+  const R = rotationFromAxisAngle(axis, theta);
+  rotAngleLabel.textContent = `${angle} deg`;
+  rotationMatrix.innerHTML = `<strong>R = exp([omega]theta)</strong>${matrixHtml(R.map((row) => row.map(fmt)))}
+    <p>omega-hat theta = (${axis.map((v) => fmt(v * theta)).join(", ")}). Columns remain perpendicular unit axes.</p>`;
+  rotationNote.innerHTML = "<strong>SO(3) checks</strong><br>R transpose R = I and det(R) = 1. This lab builds R using Rodrigues' formula.";
+
+  const { ctx, w, h } = setupCanvas(rotationCanvas);
+  grid(ctx, w, h);
+  const cx = w / 2;
+  const cy = h / 2 + 18;
+  ctx.strokeStyle = "rgba(35, 100, 170, 0.18)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 105, 0, Math.PI * 2);
+  ctx.stroke();
+  drawFrame2d(ctx, cx, cy, 0, "space", 76);
+  drawFrame2d(ctx, cx, cy, theta, "rotated", 108);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText(`axis = (${axis.map(fmt).join(", ")})`, 28, 34);
+}
+
+function drawAngularVelocity() {
+  const omega = [0, 0, 1.2];
+  const p = [1.4, 0.65, 0];
+  const velocity = [-omega[2] * p[1], omega[2] * p[0], 0];
+  skewMatrix.innerHTML = `<strong>[omega] and omega cross p</strong>${matrixHtml([
+    ["0", fmt(-omega[2]), fmt(omega[1])],
+    [fmt(omega[2]), "0", fmt(-omega[0])],
+    [fmt(-omega[1]), fmt(omega[0]), "0"]
+  ])}<p>For p = (${p.map(fmt).join(", ")}), [omega]p = (${velocity.map(fmt).join(", ")}).</p>`;
+
+  const { ctx, w, h } = setupCanvas(angularCanvas);
+  grid(ctx, w, h);
+  const cx = w / 2;
+  const cy = h / 2;
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 95, 0, Math.PI * 2);
+  ctx.stroke();
+  const px = cx + p[0] * 70;
+  const py = cy - p[1] * 70;
+  ctx.fillStyle = "#b84a3a";
+  ctx.beginPath();
+  ctx.arc(px, py, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(px + velocity[0] * 52, py - velocity[1] * 52);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("velocity is tangent to the circular path", cx - 128, h - 28);
+}
+
+function drawSe3Lab() {
+  const x = Number(se3X.value) / 10;
+  const y = Number(se3Y.value) / 10;
+  const yaw = Number(se3Yaw.value);
+  const theta = degToRad(yaw);
+  const c = Math.cos(theta);
+  const s = Math.sin(theta);
+  se3XLabel.textContent = fmt(x);
+  se3YLabel.textContent = fmt(y);
+  se3YawLabel.textContent = `${yaw} deg`;
+  se3Matrix.innerHTML = `<strong>T in SE(3), shown with yaw-only R</strong>${matrixHtml([
+    [fmt(c), fmt(-s), "0", fmt(x)],
+    [fmt(s), fmt(c), "0", fmt(y)],
+    ["0", "0", "1", "0"],
+    ["0", "0", "0", "1"]
+  ])}<p>Composition multiplies transforms; inversion transposes R and moves p back through that transpose.</p>`;
+
+  const { ctx, w, h } = setupCanvas(se3Canvas);
+  grid(ctx, w, h);
+  const ox = w / 2;
+  const oy = h / 2 + 38;
+  drawFrame2d(ctx, ox, oy, 0, "{s}", 72);
+  drawFrame2d(ctx, ox + x * 80, oy - y * 80, theta, "{b}", 92);
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox + x * 80, oy - y * 80);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawTwistLab() {
+  const mode = twistMode.value;
+  const thetaDeg = Number(twistTheta.value);
+  const pitch = Number(twistPitch.value) / 100;
+  const theta = degToRad(thetaDeg);
+  twistThetaLabel.textContent = `${thetaDeg} deg`;
+  twistPitchLabel.textContent = fmt(pitch);
+  const omega = mode === "prismatic" ? [0, 0, 0] : [0, 0, 1];
+  const v = mode === "prismatic" ? [1, 0, 0] : [0, mode === "revolute" ? 0 : pitch, 0];
+  const travel = mode === "prismatic" ? thetaDeg / 45 : pitch * theta * 90;
+  twistReadout.innerHTML = `<strong>Twist V = (omega, v)</strong>
+    <p>omega = (${omega.join(", ")}), v = (${v.map(fmt).join(", ")}). ${mode === "prismatic" ? "No angular part: pure translation." : "The exponential of this twist creates a finite screw motion."}</p>`;
+
+  const { ctx, w, h } = setupCanvas(twistCanvas);
+  grid(ctx, w, h);
+  const cx = w / 2;
+  const cy = h / 2 + 25;
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - 190, cy);
+  ctx.lineTo(cx + 190, cy);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("screw axis", cx - 34, cy + 26);
+  if (mode === "prismatic") {
+    ctx.strokeStyle = "#2a8c6d";
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(cx - 80, cy - 60);
+    ctx.lineTo(cx + 80 + travel * 30, cy - 60);
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = "#2364aa";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    for (let i = 0; i <= 90; i += 1) {
+      const t = (i / 90) * theta * 2.2;
+      const x = cx - 150 + i * 3.3;
+      const y = cy - 52 + Math.sin(t) * 38 - travel * (i / 90);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#b84a3a";
+    ctx.beginPath();
+    ctx.arc(cx + 145, cy - 52 + Math.sin(theta * 2.2) * 38 - travel, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawWrenchLab() {
+  const moment = [0, 0, 2.1];
+  const force = [1.2, 0.45, 0];
+  const omega = [0, 0, 1.4];
+  const velocity = [0.8, 0.1, 0];
+  const power = moment[2] * omega[2] + force[0] * velocity[0] + force[1] * velocity[1];
+  wrenchPower.textContent = `With m = (${moment.map(fmt).join(", ")}), f = (${force.map(fmt).join(", ")}), omega = (${omega.map(fmt).join(", ")}), and v = (${velocity.map(fmt).join(", ")}), power is ${fmt(power)}.`;
+  const { ctx, w, h } = setupCanvas(wrenchCanvas);
+  grid(ctx, w, h);
+  const cx = w / 2;
+  const cy = h / 2 + 20;
+  ctx.fillStyle = "#d9e2ea";
+  ctx.fillRect(cx - 82, cy - 48, 164, 96);
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cx - 82, cy - 48, 164, 96);
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + force[0] * 85, cy - force[1] * 85);
+  ctx.stroke();
+  ctx.strokeStyle = "#2364aa";
+  ctx.beginPath();
+  ctx.arc(cx - 4, cy, 42, -0.3, 4.9);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("force plus moment = wrench", cx - 84, cy + 82);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -934,6 +1349,14 @@ function redrawActiveChapter() {
     drawTopology();
     const selected = document.querySelector(".constraint-mode.active")?.dataset.constraint || "holonomic";
     drawConstraint(selected);
+  }
+  if (active === "3") {
+    drawPlaneMotion();
+    drawRotationLab();
+    drawAngularVelocity();
+    drawSe3Lab();
+    drawTwistLab();
+    drawWrenchLab();
   }
 }
 
@@ -953,6 +1376,16 @@ const navLinksByChapter = {
     ["Constraints", "#chapter2-constraints"],
     ["Task", "#chapter2-task"],
     ["Check", "#chapter2-check"]
+  ],
+  "3": [
+    ["Spine", "#chapter3-spine"],
+    ["Plane", "#chapter3-plane"],
+    ["SO(3)", "#chapter3-rotations"],
+    ["Velocity", "#chapter3-angular"],
+    ["SE(3)", "#chapter3-se3"],
+    ["Twists", "#chapter3-twists"],
+    ["Wrenches", "#chapter3-wrenches"],
+    ["Check", "#chapter3-check"]
   ]
 };
 
@@ -1004,6 +1437,17 @@ document.querySelectorAll(".constraint-mode").forEach((button) => {
 });
 angleOne.addEventListener("input", drawArm);
 angleTwo.addEventListener("input", drawArm);
+planeX.addEventListener("input", drawPlaneMotion);
+planeY.addEventListener("input", drawPlaneMotion);
+planeTheta.addEventListener("input", drawPlaneMotion);
+rotAxis.addEventListener("change", drawRotationLab);
+rotAngle.addEventListener("input", drawRotationLab);
+se3X.addEventListener("input", drawSe3Lab);
+se3Y.addEventListener("input", drawSe3Lab);
+se3Yaw.addEventListener("input", drawSe3Lab);
+twistMode.addEventListener("change", drawTwistLab);
+twistTheta.addEventListener("input", drawTwistLab);
+twistPitch.addEventListener("input", drawTwistLab);
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -1014,5 +1458,7 @@ renderChapter2Concepts();
 renderJointTable();
 renderTaskCards();
 renderGenericQuiz("#chapter2Quiz", chapter2QuizItems, "Not quite. Revisit the concept card above, then compare this option to the definition from Chapter 2.");
+renderChapter3Concepts();
+renderGenericQuiz("#chapter3Quiz", chapter3QuizItems, "Not quite. Chapter 3 is careful about what each object represents; check the nearby lab and try again.");
 setChapter("1");
 drawArm();

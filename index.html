@@ -16,6 +16,7 @@
       <div class="chapter-switcher" role="group" aria-label="Chapter switcher">
         <button class="chapter-switch active" data-target-chapter="1">Chapter 1</button>
         <button class="chapter-switch" data-target-chapter="2">Chapter 2</button>
+        <button class="chapter-switch" data-target-chapter="3">Chapter 3</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -340,6 +341,192 @@
           <p>These are the questions to own before Chapter 3 starts using matrices.</p>
         </div>
         <div class="quiz" id="chapter2Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="3">
+      <section class="chapter-hero chapter3-hero" id="chapter3" aria-labelledby="chapter3-title">
+        <div>
+          <p class="kicker">Chapter 3</p>
+          <h2 id="chapter3-title">Rigid-Body Motions</h2>
+          <p>
+            Chapter 3 builds the language used by the rest of the book. A robot link is a
+            rigid body, so we need precise ways to describe orientation, position, velocity,
+            force, and moment. The chapter's core move is to package geometry into matrices
+            and six-vectors that transform cleanly between frames.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Chapter 3 ladder</p>
+          <strong>SO(3) -> SE(3) -> twists -> wrenches</strong>
+          <p>
+            Rotations describe orientation. Homogeneous transforms describe full pose.
+            Twists describe rigid-body velocity. Wrenches describe forces and moments.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter3-spine" aria-labelledby="chapter3-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter3-spine-title">What Chapter 3 is really teaching</h2>
+          <p>
+            This chapter is not just notation. It is a compact geometry engine. Each
+            block below becomes a dependency for forward kinematics, Jacobians, inverse
+            kinematics, dynamics, and control.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter3Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter3-plane" aria-labelledby="plane-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 3.1</p>
+          <h2 id="plane-title">Rigid-body motions in the plane</h2>
+          <p>
+            A planar rigid body pose needs x, y, and theta. The same physical motion can
+            be read actively, as moving a body, or passively, as changing coordinates
+            between frames.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>x translation <span id="planeXLabel">80</span><input id="planeX" type="range" min="-130" max="130" value="80"></label>
+            <label>y translation <span id="planeYLabel">42</span><input id="planeY" type="range" min="-90" max="90" value="42"></label>
+            <label>theta <span id="planeThetaLabel">34 deg</span><input id="planeTheta" type="range" min="-180" max="180" value="34"></label>
+            <div class="matrix-readout" id="planeMatrix"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="planeCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter3-rotations" aria-labelledby="rot-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 3.2</p>
+          <h2 id="rot-title">Rotation matrices and exponential coordinates</h2>
+          <p>
+            A rotation matrix is three orthonormal body-frame axes written in another
+            frame. Exponential coordinates compress a rotation into an axis multiplied
+            by an angle.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>Axis
+              <select id="rotAxis">
+                <option value="x">x-axis</option>
+                <option value="y">y-axis</option>
+                <option value="z" selected>z-axis</option>
+                <option value="diag">unit diagonal</option>
+              </select>
+            </label>
+            <label>Angle <span id="rotAngleLabel">45 deg</span><input id="rotAngle" type="range" min="-180" max="180" value="45"></label>
+            <div class="matrix-readout" id="rotationMatrix"></div>
+            <div class="explain-block" id="rotationNote"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="rotationCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter3-angular" aria-labelledby="angular-title">
+        <div>
+          <p class="eyebrow">Angular velocity</p>
+          <h2 id="angular-title">The bracket operator turns vectors into cross products</h2>
+          <p>
+            The book writes angular velocity as omega in vector form and [omega] as a
+            skew-symmetric matrix. Multiplying [omega] by a point gives omega cross p,
+            the instantaneous velocity contribution from rotation.
+          </p>
+          <div class="matrix-readout" id="skewMatrix"></div>
+        </div>
+        <div class="visual-panel">
+          <canvas id="angularCanvas" width="620" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="band" id="chapter3-se3" aria-labelledby="se3-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 3.3.1</p>
+          <h2 id="se3-title">Homogeneous transformation matrices</h2>
+          <p>
+            A transform T in SE(3) packages orientation R and position p. It can represent
+            a configuration of one frame relative to another, a coordinate transform, or a
+            displacement operation. The matrix form keeps all three uses consistent.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>translation x <span id="se3XLabel">1.6</span><input id="se3X" type="range" min="-30" max="30" value="16"></label>
+            <label>translation y <span id="se3YLabel">0.8</span><input id="se3Y" type="range" min="-20" max="20" value="8"></label>
+            <label>yaw <span id="se3YawLabel">30 deg</span><input id="se3Yaw" type="range" min="-180" max="180" value="30"></label>
+            <div class="matrix-readout" id="se3Matrix"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="se3Canvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter3-twists" aria-labelledby="twist-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 3.3.2 and 3.3.3</p>
+          <h2 id="twist-title">Twists and screw motions</h2>
+          <p>
+            A twist V = (omega, v) is a six-vector velocity of a rigid body. Its
+            exponential coordinates S theta produce a finite rigid-body motion, which is
+            the idea behind the product of exponentials formula in Chapter 4.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>Motion type
+              <select id="twistMode">
+                <option value="revolute">Revolute screw axis</option>
+                <option value="prismatic">Prismatic axis</option>
+                <option value="helical">Helical screw</option>
+              </select>
+            </label>
+            <label>theta <span id="twistThetaLabel">55 deg</span><input id="twistTheta" type="range" min="0" max="180" value="55"></label>
+            <label>pitch <span id="twistPitchLabel">0.40</span><input id="twistPitch" type="range" min="-100" max="100" value="40"></label>
+            <div class="matrix-readout" id="twistReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="twistCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter3-wrenches" aria-labelledby="wrench-title">
+        <div>
+          <p class="eyebrow">Section 3.4</p>
+          <h2 id="wrench-title">Wrenches are dual to twists</h2>
+          <p>
+            A wrench combines moment and force. The dot product of a wrench with a twist
+            gives power, so the pair belongs together: twists describe motion, wrenches
+            describe the effort doing work through that motion.
+          </p>
+          <div class="formula-panel compact">
+            <p class="eyebrow">Power pairing</p>
+            <strong>P = F dot V = m dot omega + f dot v</strong>
+            <p id="wrenchPower"></p>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <canvas id="wrenchCanvas" width="620" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="band" id="chapter3-check" aria-labelledby="chapter3-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter3-quiz-title">Chapter 3 checkpoint</h2>
+          <p>Own these distinctions before moving to product-of-exponentials kinematics.</p>
+        </div>
+        <div class="quiz" id="chapter3Quiz"></div>
       </section>
       </div>
     </main>
