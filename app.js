@@ -912,6 +912,30 @@ const chapter12QuizItems = [
   { q: "Why does manipulation planning track contact modes?", answers: ["Because grasping, pushing, sliding, rolling, and breaking contact obey different constraints.", "Because all contacts are equivalent.", "Because friction is never relevant."], correct: 0, note: "Good. The active contact mode changes the feasible motion and force model." }
 ];
 
+const chapter13Concepts = [
+  { title: "Planar chassis configuration", text: "The base pose is q = (phi, x, y), or equivalently an SE(2) transform Tsb." },
+  { title: "Body twist", text: "The chassis velocity can be expressed as Vb = (omega_bz, v_bx, v_by) in the body frame." },
+  { title: "Conventional wheels", text: "Typical wheels roll forward and resist sideways slip, creating nonholonomic constraints." },
+  { title: "Omni and mecanum wheels", text: "Passive rollers allow sideways sliding at each wheel, so the chassis can be omnidirectional." },
+  { title: "Omnidirectional modeling", text: "A wheel-speed matrix maps desired chassis velocity or body twist to individual wheel speeds." },
+  { title: "Omni planning and control", text: "Because any planar velocity is possible, standard path planning and feedforward plus PI feedback apply." },
+  { title: "Unicycle model", text: "The canonical nonholonomic robot uses forward speed v and turn rate omega." },
+  { title: "Differential drive", text: "Left and right wheel speeds combine into forward speed and yaw rate." },
+  { title: "Car-like robots", text: "Ackermann steering enforces rolling without sideways slip while limiting curvature." },
+  { title: "Controllability", text: "Lie brackets explain how forward and turning motions can produce sideways reachable motion." },
+  { title: "Odometry", text: "Wheel encoder integration estimates pose but accumulates drift from model and slip errors." },
+  { title: "Mobile manipulation", text: "A mobile base and robot arm are coordinated through a combined task-space Jacobian." }
+];
+
+const chapter13QuizItems = [
+  { q: "What distinguishes an omnidirectional base?", answers: ["It has no equality constraint on planar chassis velocity.", "It can never rotate.", "It must use conventional car wheels only."], correct: 0, note: "Yes. Omni and mecanum bases can command sideways velocity." },
+  { q: "Why is a differential-drive base nonholonomic?", answers: ["It cannot move sideways instantaneously because the wheels roll without lateral slip.", "It cannot drive forward.", "It has no wheel encoders."], correct: 0, note: "Right. The sideways velocity constraint is nonintegrable." },
+  { q: "What does a Lie bracket maneuver explain?", answers: ["How alternating feasible motions can create a small net motion in a new direction.", "How to compute motor torque from mass.", "How to form a friction cone."], correct: 0, note: "Exactly. The parallel-parking motion is the famous Chapter 13 picture." },
+  { q: "What does odometry integrate?", answers: ["Wheel motion through the kinematic model to estimate pose.", "Only camera images.", "Only contact forces."], correct: 0, note: "Good. Odometry is dead reckoning from wheel measurements." },
+  { q: "Why do odometry errors grow?", answers: ["Small wheel, slip, and calibration errors are integrated over time.", "The robot forgets its chapter number.", "Omniwheels remove all sensing needs."], correct: 0, note: "Yes. Integrated error is the core odometry warning." },
+  { q: "What is mobile manipulation?", answers: ["Coordinated control of a mobile base and arm to move the end-effector.", "Only a fixed-base arm.", "Only a standalone wheel."], correct: 0, note: "Correct. The base gives reach; the arm gives dexterity." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1122,6 +1146,29 @@ const graspSpread = document.querySelector("#graspSpread");
 const graspSpreadLabel = document.querySelector("#graspSpreadLabel");
 const closureReadout = document.querySelector("#closureReadout");
 const closureCanvas = document.querySelector("#closureCanvas");
+const omniVx = document.querySelector("#omniVx");
+const omniVy = document.querySelector("#omniVy");
+const omniOmega = document.querySelector("#omniOmega");
+const omniVxLabel = document.querySelector("#omniVxLabel");
+const omniVyLabel = document.querySelector("#omniVyLabel");
+const omniOmegaLabel = document.querySelector("#omniOmegaLabel");
+const omniReadout = document.querySelector("#omniReadout");
+const omniCanvas = document.querySelector("#omniCanvas");
+const nonholonomicMode = document.querySelector("#nonholonomicMode");
+const mobileSpeed = document.querySelector("#mobileSpeed");
+const mobileTurn = document.querySelector("#mobileTurn");
+const mobileSpeedLabel = document.querySelector("#mobileSpeedLabel");
+const mobileTurnLabel = document.querySelector("#mobileTurnLabel");
+const nonholonomicReadout = document.querySelector("#nonholonomicReadout");
+const nonholonomicCanvas = document.querySelector("#nonholonomicCanvas");
+const leftBias = document.querySelector("#leftBias");
+const rightBias = document.querySelector("#rightBias");
+const odomSteps = document.querySelector("#odomSteps");
+const leftBiasLabel = document.querySelector("#leftBiasLabel");
+const rightBiasLabel = document.querySelector("#rightBiasLabel");
+const odomStepsLabel = document.querySelector("#odomStepsLabel");
+const odometryReadout = document.querySelector("#odometryReadout");
+const odometryCanvas = document.querySelector("#odometryCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -3404,6 +3451,218 @@ function drawClosureLab() {
   ctx.fillText("wrench direction sketch", wx - 76, 34);
 }
 
+function renderChapter13Concepts() {
+  const el = document.querySelector("#chapter13Concepts");
+  el.innerHTML = chapter13Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function drawMobileBase(ctx, x, y, heading, color = "#2364aa", scale = 1) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-heading);
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.roundRect(-42 * scale, -30 * scale, 84 * scale, 60 * scale, 8 * scale);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fillRect(-34 * scale, -38 * scale, 20 * scale, 8 * scale);
+  ctx.fillRect(14 * scale, -38 * scale, 20 * scale, 8 * scale);
+  ctx.fillRect(-34 * scale, 30 * scale, 20 * scale, 8 * scale);
+  ctx.fillRect(14 * scale, 30 * scale, 20 * scale, 8 * scale);
+  ctx.beginPath();
+  ctx.moveTo(42 * scale, 0);
+  ctx.lineTo(20 * scale, -12 * scale);
+  ctx.lineTo(20 * scale, 12 * scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawOmniLab() {
+  const vx = Number(omniVx.value);
+  const vy = Number(omniVy.value);
+  const omega = Number(omniOmega.value);
+  omniVxLabel.textContent = fmt(vx);
+  omniVyLabel.textContent = fmt(vy);
+  omniOmegaLabel.textContent = fmt(omega);
+  const L = 0.7;
+  const r = 0.12;
+  const wheelSpeeds = [
+    (vx - vy - L * omega) / r,
+    (vx + vy + L * omega) / r,
+    (vx + vy - L * omega) / r,
+    (vx - vy + L * omega) / r
+  ];
+  const maxAbs = Math.max(1, ...wheelSpeeds.map(Math.abs));
+  omniReadout.innerHTML = `<strong>mecanum wheel-speed sketch</strong>
+    <p>u = (${wheelSpeeds.map(fmt).join(", ")}) rad/s.</p>
+    <p>Forward motion makes all speeds similar; sideways motion flips signs across the diagonal; yaw flips left/right pairs.</p>`;
+  const { ctx, w, h } = setupCanvas(omniCanvas);
+  grid(ctx, w, h);
+  const c = { x: w * 0.36, y: h * 0.54 };
+  drawMobileBase(ctx, c.x, c.y, 0, "#2364aa", 1.25);
+  drawArrow(ctx, c, { x: c.x + vx * 92, y: c.y - vy * 92 }, "#2a8c6d", 4);
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, 70, -0.3, -0.3 - omega * 2.2, omega < 0);
+  ctx.stroke();
+  const wheelPts = [
+    { x: c.x - 72, y: c.y - 54 },
+    { x: c.x + 72, y: c.y - 54 },
+    { x: c.x - 72, y: c.y + 54 },
+    { x: c.x + 72, y: c.y + 54 }
+  ];
+  wheelPts.forEach((p, i) => {
+    const len = (wheelSpeeds[i] / maxAbs) * 48;
+    drawArrow(ctx, p, { x: p.x, y: p.y - len }, wheelSpeeds[i] >= 0 ? "#2a8c6d" : "#b84a3a", 3);
+  });
+  const bx = w * 0.72;
+  const baseY = h - 54;
+  wheelSpeeds.forEach((speed, i) => {
+    const x = bx + (i - 1.5) * 44;
+    const bar = (speed / maxAbs) * 92;
+    ctx.fillStyle = speed >= 0 ? "#2a8c6d" : "#b84a3a";
+    ctx.fillRect(x - 14, baseY - Math.max(0, bar), 28, Math.abs(bar));
+    ctx.fillStyle = "#16202a";
+    ctx.fillText(`u${i + 1}`, x - 10, baseY + 22);
+  });
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("green vector: desired body translation, red arc: yaw", 28, 34);
+}
+
+function nonholonomicPath(mode, v, omega) {
+  const dt = 0.08;
+  const path = [{ x: 0, y: 0, phi: 0 }];
+  let state = { x: 0, y: 0, phi: 0 };
+  const commands = mode === "bracket"
+    ? [[v, 0, 18], [0, omega, 18], [-v, 0, 18], [0, -omega, 18]]
+    : mode === "spin"
+      ? [[0, omega, 70]]
+      : [[v, omega, 70]];
+  commands.forEach(([cv, cw, count]) => {
+    for (let i = 0; i < count; i += 1) {
+      state = {
+        x: state.x + cv * Math.cos(state.phi) * dt,
+        y: state.y + cv * Math.sin(state.phi) * dt,
+        phi: state.phi + cw * dt
+      };
+      path.push({ ...state });
+    }
+  });
+  return path;
+}
+
+function drawNonholonomicLab() {
+  const mode = nonholonomicMode.value;
+  const v = Number(mobileSpeed.value);
+  const omega = Number(mobileTurn.value);
+  mobileSpeedLabel.textContent = fmt(v);
+  mobileTurnLabel.textContent = fmt(omega);
+  const path = nonholonomicPath(mode, v, omega || 0.01);
+  const end = path[path.length - 1];
+  nonholonomicReadout.innerHTML = `<strong>${nonholonomicMode.options[nonholonomicMode.selectedIndex].text}</strong>
+    <p>end pose approx (phi, x, y) = (${fmt(end.phi)}, ${fmt(end.x)}, ${fmt(end.y)}).</p>
+    <p>${mode === "bracket" ? "The bracket sequence produces sideways displacement even though no sideways velocity was commanded." : mode === "spin" ? "Spinning changes heading without translating, as differential-drive robots can do." : "The instantaneous velocity points along the robot heading, so the path curves rather than moving sideways."}</p>`;
+  const { ctx, w, h } = setupCanvas(nonholonomicCanvas);
+  grid(ctx, w, h);
+  const origin = { x: w * 0.28, y: h * 0.62 };
+  const scale = 115;
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  path.forEach((p, i) => {
+    const x = origin.x + p.x * scale;
+    const y = origin.y - p.y * scale;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  const start = path[0];
+  drawMobileBase(ctx, origin.x + start.x * scale, origin.y - start.y * scale, start.phi, "#5a6875", 0.75);
+  drawMobileBase(ctx, origin.x + end.x * scale, origin.y - end.y * scale, end.phi, "#b84a3a", 0.9);
+  drawArrow(ctx, { x: w * 0.68, y: h * 0.58 }, { x: w * 0.80, y: h * 0.58 }, "#2364aa", 4);
+  ctx.strokeStyle = "#b84a3a";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(w * 0.68, h * 0.58, 48, -0.5, -1.6, true);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("controls: forward v and yaw omega; no direct body vy", 28, 34);
+}
+
+function integrateDiffDrive(steps, biasL = 0, biasR = 0) {
+  const r = 0.08;
+  const d = 0.28;
+  const dt = 0.08;
+  let truePose = { x: 0, y: 0, phi: 0 };
+  let odomPose = { x: 0, y: 0, phi: 0 };
+  const truePath = [];
+  const odomPath = [];
+  for (let i = 0; i < steps; i += 1) {
+    const uL = 5.0 + 1.1 * Math.sin(i / 16);
+    const uR = 5.6 - 0.9 * Math.sin(i / 18);
+    const pairs = [
+      [truePose, uL, uR],
+      [odomPose, uL * (1 + biasL), uR * (1 + biasR)]
+    ];
+    pairs.forEach(([pose, left, right]) => {
+      const v = (r / 2) * (left + right);
+      const omega = (r / (2 * d)) * (right - left);
+      pose.x += v * Math.cos(pose.phi) * dt;
+      pose.y += v * Math.sin(pose.phi) * dt;
+      pose.phi += omega * dt;
+    });
+    truePath.push({ ...truePose });
+    odomPath.push({ ...odomPose });
+  }
+  return { truePath, odomPath };
+}
+
+function drawOdometryLab() {
+  const lb = Number(leftBias.value) / 100;
+  const rb = Number(rightBias.value) / 100;
+  const steps = Number(odomSteps.value);
+  leftBiasLabel.textContent = `${Number(leftBias.value)}%`;
+  rightBiasLabel.textContent = `${Number(rightBias.value)}%`;
+  odomStepsLabel.textContent = String(steps);
+  const { truePath, odomPath } = integrateDiffDrive(steps, lb, rb);
+  const a = truePath[truePath.length - 1];
+  const b = odomPath[odomPath.length - 1];
+  const drift = Math.hypot(a.x - b.x, a.y - b.y);
+  odometryReadout.innerHTML = `<strong>dead-reckoning drift</strong>
+    <p>true end = (${fmt(a.x)}, ${fmt(a.y)}), odom end = (${fmt(b.x)}, ${fmt(b.y)}).</p>
+    <p>pose drift from wheel bias is about ${fmt(drift)} m before any external correction.</p>`;
+  const { ctx, w, h } = setupCanvas(odometryCanvas);
+  grid(ctx, w, h);
+  const origin = { x: 64, y: h * 0.76 };
+  const scale = 128;
+  function plot(path, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    path.forEach((p, i) => {
+      const x = origin.x + p.x * scale;
+      const y = origin.y - p.y * scale;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+  plot(truePath, "#2364aa");
+  plot(odomPath, "#b84a3a");
+  drawMobileBase(ctx, origin.x + a.x * scale, origin.y - a.y * scale, a.phi, "#2364aa", 0.75);
+  drawMobileBase(ctx, origin.x + b.x * scale, origin.y - b.y * scale, b.phi, "#b84a3a", 0.75);
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("blue true model, red encoder-biased odometry", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -3464,6 +3723,11 @@ function redrawActiveChapter() {
     drawContactKinematicsLab();
     drawFrictionConeLab();
     drawClosureLab();
+  }
+  if (active === "13") {
+    drawOmniLab();
+    drawNonholonomicLab();
+    drawOdometryLab();
   }
 }
 
@@ -3579,6 +3843,14 @@ const navLinksByChapter = {
     ["Closure", "#chapter12-closure"],
     ["Manipulate", "#chapter12-manipulation"],
     ["Check", "#chapter12-check"]
+  ],
+  "13": [
+    ["Spine", "#chapter13-spine"],
+    ["Omni", "#chapter13-omni"],
+    ["Nonholonomic", "#chapter13-nonholonomic"],
+    ["Odometry", "#chapter13-odometry"],
+    ["Mobile Arm", "#chapter13-mobile-manipulation"],
+    ["Check", "#chapter13-check"]
   ]
 };
 
@@ -3723,6 +3995,16 @@ contactTwistMode.addEventListener("change", applyContactTwistPreset);
   input.addEventListener("input", drawClosureLab);
   input.addEventListener("change", drawClosureLab);
 });
+[omniVx, omniVy, omniOmega].forEach((input) => {
+  input.addEventListener("input", drawOmniLab);
+});
+[nonholonomicMode, mobileSpeed, mobileTurn].forEach((input) => {
+  input.addEventListener("input", drawNonholonomicLab);
+  input.addEventListener("change", drawNonholonomicLab);
+});
+[leftBias, rightBias, odomSteps].forEach((input) => {
+  input.addEventListener("input", drawOdometryLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -3754,5 +4036,7 @@ renderChapter11Concepts();
 renderGenericQuiz("#chapter11Quiz", chapter11QuizItems, "Not quite. Chapter 11 asks which signal is controlled, what error dynamics result, and how contact changes the objective.");
 renderChapter12Concepts();
 renderGenericQuiz("#chapter12Quiz", chapter12QuizItems, "Not quite. Chapter 12 is about contact kinematics, friction-limited wrenches, closure, and manipulation modes.");
+renderChapter13Concepts();
+renderGenericQuiz("#chapter13Quiz", chapter13QuizItems, "Not quite. Chapter 13 separates omnidirectional velocity control, nonholonomic reachable motion, odometry, and base-plus-arm coordination.");
 setChapter("1");
 drawArm();

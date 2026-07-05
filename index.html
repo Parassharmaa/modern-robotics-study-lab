@@ -26,6 +26,7 @@
         <button class="chapter-switch" data-target-chapter="10">Chapter 10</button>
         <button class="chapter-switch" data-target-chapter="11">Chapter 11</button>
         <button class="chapter-switch" data-target-chapter="12">Chapter 12</button>
+        <button class="chapter-switch" data-target-chapter="13">Chapter 13</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1777,6 +1778,144 @@
           <p>These checks separate contact kinematics, friction cones, form closure, force closure, and manipulation planning.</p>
         </div>
         <div class="quiz" id="chapter12Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="13">
+      <section class="chapter-hero chapter13-hero" id="chapter13" aria-labelledby="chapter13-title">
+        <div>
+          <p class="kicker">Chapter 13</p>
+          <h2 id="chapter13-title">Wheeled Mobile Robots</h2>
+          <p>
+            Chapter 13 studies robots whose bases move through the plane. Some bases
+            are omnidirectional, so any planar chassis velocity can be commanded.
+            Others are nonholonomic: they cannot move sideways instantaneously, yet
+            can still reach sideways configurations by maneuvering.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Two model shapes</p>
+          <strong>omni: u = H Vb; nonholonomic: qdot = G(q)u</strong>
+          <p>
+            Omni bases map body twist directly to wheel speeds. Nonholonomic bases
+            obey rolling constraints and need planned maneuvers for some motions.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter13-spine" aria-labelledby="chapter13-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter13-spine-title">What Chapter 13 covers</h2>
+          <p>
+            The chapter separates omnidirectional and nonholonomic bases, then covers
+            wheel-speed models, planning, feedback control, controllability, odometry,
+            and mobile manipulation.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter13Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter13-omni" aria-labelledby="omni-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 13.1 and 13.2</p>
+          <h2 id="omni-title">Omnidirectional bases convert chassis twist to wheel speeds</h2>
+          <p>
+            Mecanum and omniwheel bases allow sideways chassis motion because their
+            passive rollers permit free sliding in one direction. Move the desired
+            body twist and watch the four wheel speeds change.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>body vx <span id="omniVxLabel">0.60</span><input id="omniVx" type="range" min="-1" max="1" step="0.05" value="0.6"></label>
+            <label>body vy <span id="omniVyLabel">0.25</span><input id="omniVy" type="range" min="-1" max="1" step="0.05" value="0.25"></label>
+            <label>body omega <span id="omniOmegaLabel">0.30</span><input id="omniOmega" type="range" min="-1" max="1" step="0.05" value="0.3"></label>
+            <div class="matrix-readout" id="omniReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="omniCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter13-nonholonomic" aria-labelledby="nonholonomic-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 13.3</p>
+          <h2 id="nonholonomic-title">Nonholonomic robots cannot move sideways instantly</h2>
+          <p>
+            A unicycle or differential-drive base has controls for forward speed and
+            angular speed. It cannot command body-frame sideways velocity directly,
+            but Lie-bracket maneuvers create a small net sideways displacement.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>maneuver
+              <select id="nonholonomicMode">
+                <option value="arc">Forward arc</option>
+                <option value="spin">Spin in place</option>
+                <option value="bracket">Parallel-parking bracket</option>
+              </select>
+            </label>
+            <label>forward speed <span id="mobileSpeedLabel">0.70</span><input id="mobileSpeed" type="range" min="-1" max="1" step="0.05" value="0.7"></label>
+            <label>turn rate <span id="mobileTurnLabel">0.45</span><input id="mobileTurn" type="range" min="-1" max="1" step="0.05" value="0.45"></label>
+            <div class="matrix-readout" id="nonholonomicReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="nonholonomicCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter13-odometry" aria-labelledby="odometry-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 13.4</p>
+          <h2 id="odometry-title">Odometry integrates wheel motion and accumulates drift</h2>
+          <p>
+            Wheel encoders estimate motion by integrating the model. Small radius,
+            baseline, slip, or encoder errors accumulate, so odometry is useful but
+            rarely sufficient without external sensing.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>left wheel bias <span id="leftBiasLabel">2%</span><input id="leftBias" type="range" min="-8" max="8" value="2"></label>
+            <label>right wheel bias <span id="rightBiasLabel">-1%</span><input id="rightBias" type="range" min="-8" max="8" value="-1"></label>
+            <label>integration steps <span id="odomStepsLabel">80</span><input id="odomSteps" type="range" min="25" max="140" value="80"></label>
+            <div class="matrix-readout" id="odometryReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="odometryCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter13-mobile-manipulation" aria-labelledby="mobile-manipulation-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 13.5</p>
+          <h2 id="mobile-manipulation-title">Mobile manipulation couples the base and the arm</h2>
+          <p>
+            A mobile manipulator combines chassis motion with arm motion. The base
+            changes the arm's reachable workspace, while the arm gives dexterity near
+            the object. Planning and control must coordinate both.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Chassis plus arm configuration</h3><p>The full state includes planar base pose, arm joints, and often wheel angles for odometry.</p></article>
+          <article class="task-card"><h3>End-effector velocity</h3><p>The task-space twist combines the base Jacobian and the manipulator Jacobian.</p></article>
+          <article class="task-card"><h3>Planning split</h3><p>The base handles gross positioning; the arm handles accurate local manipulation.</p></article>
+          <article class="task-card"><h3>Feedback split</h3><p>Base odometry and arm encoders need feedback from vision, lidar, force, or localization to stay useful.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter13-check" aria-labelledby="chapter13-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter13-quiz-title">Chapter 13 checkpoint</h2>
+          <p>These checks separate omni models, nonholonomic constraints, controllability, odometry, and mobile manipulation.</p>
+        </div>
+        <div class="quiz" id="chapter13Quiz"></div>
       </section>
       </div>
     </main>
