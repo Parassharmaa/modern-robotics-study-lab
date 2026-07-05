@@ -28,6 +28,7 @@
         <button class="chapter-switch" data-target-chapter="12">Chapter 12</button>
         <button class="chapter-switch" data-target-chapter="13">Chapter 13</button>
         <button class="chapter-switch" data-target-chapter="A">Appendix A</button>
+        <button class="chapter-switch" data-target-chapter="B">Appendix B</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -2015,6 +2016,100 @@
           <p>These checks test whether you know which formula family answers which robotics question.</p>
         </div>
         <div class="quiz" id="appendixAQuiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="B">
+      <section class="chapter-hero appendixB-hero" id="appendixB" aria-labelledby="appendixB-title">
+        <div>
+          <p class="kicker">Appendix B</p>
+          <h2 id="appendixB-title">Other Representations of Rotations</h2>
+          <p>
+            Appendix B compares common orientation coordinates beyond axis-angle:
+            ZYX Euler angles, XYZ roll-pitch-yaw angles, unit quaternions, and
+            Cayley-Rodrigues parameters. Each represents the same SO(3) rotation
+            with different tradeoffs.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Main warning</p>
+          <strong>three coordinates are compact, but singularities are unavoidable</strong>
+          <p>
+            Quaternions avoid local singularities by using four constrained numbers.
+            Euler-style coordinates are intuitive but can hit gimbal-lock cases.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="appendixB-spine" aria-labelledby="appendixB-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Representation map</p>
+          <h2 id="appendixB-spine-title">What Appendix B covers</h2>
+          <p>
+            This appendix is a conversion guide: it explains how several coordinate
+            choices describe the same rotation matrix and where each choice becomes
+            awkward.
+          </p>
+        </div>
+        <div class="concept-grid" id="appendixBConcepts"></div>
+      </section>
+
+      <section class="band" id="appendixB-lab" aria-labelledby="rotation-representation-title">
+        <div class="section-head">
+          <p class="eyebrow">Interactive conversion</p>
+          <h2 id="rotation-representation-title">Rotate once, read it several ways</h2>
+          <p>
+            Move the three angles and choose a representation. The underlying rotation
+            matrix is the same for ZYX Euler angles and XYZ roll-pitch-yaw, but the
+            physical interpretation of the ordered rotations is different.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>representation
+              <select id="rotationRep">
+                <option value="zyx">ZYX Euler angles</option>
+                <option value="rpy">XYZ roll-pitch-yaw</option>
+                <option value="quat">Unit quaternion</option>
+                <option value="cayley">Cayley-Rodrigues parameters</option>
+              </select>
+            </label>
+            <label>alpha / yaw <span id="rotAlphaLabel">35 deg</span><input id="rotAlpha" type="range" min="-180" max="180" value="35"></label>
+            <label>beta / pitch <span id="rotBetaLabel">25 deg</span><input id="rotBeta" type="range" min="-89" max="89" value="25"></label>
+            <label>gamma / roll <span id="rotGammaLabel">-30 deg</span><input id="rotGamma" type="range" min="-180" max="180" value="-30"></label>
+            <div class="matrix-readout" id="rotationRepReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="rotationRepCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="appendixB-tradeoffs" aria-labelledby="rotation-tradeoffs-title">
+        <div class="section-head">
+          <p class="eyebrow">Choosing coordinates</p>
+          <h2 id="rotation-tradeoffs-title">Representation tradeoffs</h2>
+          <p>
+            No representation is best everywhere. The right choice depends on whether
+            you need intuitive angles, smooth interpolation, compact local coordinates,
+            or simple composition.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>ZYX Euler</h3><p>Good for yaw-pitch-roll-like reasoning, but beta near +/-90 degrees creates a one-parameter family of angle solutions.</p></article>
+          <article class="task-card"><h3>Roll-pitch-yaw</h3><p>Uses fixed-frame rotations; the same matrix product can be interpreted differently from body-frame Euler rotations.</p></article>
+          <article class="task-card"><h3>Unit quaternion</h3><p>Four numbers on the unit 3-sphere avoid local singularities, but q and -q represent the same rotation.</p></article>
+          <article class="task-card"><h3>Cayley-Rodrigues</h3><p>Compact three-parameter local coordinates with simple composition, but not valid for rotations with trace equal to -1.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="appendixB-check" aria-labelledby="appendixB-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="appendixB-quiz-title">Appendix B checkpoint</h2>
+          <p>These checks test the difference between Euler-style angles, quaternions, and Cayley-Rodrigues parameters.</p>
+        </div>
+        <div class="quiz" id="appendixBQuiz"></div>
       </section>
       </div>
     </main>

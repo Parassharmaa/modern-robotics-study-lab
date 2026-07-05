@@ -541,6 +541,12 @@ canvas {
     #fff;
 }
 
+.appendixB-hero {
+  background:
+    linear-gradient(115deg, rgba(110, 91, 191, 0.12), rgba(255, 255, 255, 0.84) 46%),
+    #fff;
+}
+
 .chapter-hero > *,
 .roadmap-layout > *,
 .split > *,

@@ -1033,6 +1033,30 @@ const appendixAQuizItems = [
   { q: "What does the product of exponentials answer?", answers: ["Forward kinematics from joint values to pose.", "How much friction is available.", "Whether a car can move sideways instantly."], correct: 0, note: "Good. PoE is the compact forward-kinematics formula." }
 ];
 
+const appendixBConcepts = [
+  { title: "Euler-angle idea", text: "Represent orientation as three successive rotations about ordered axes." },
+  { title: "ZYX Euler angles", text: "Rotate about body z, then body y, then body x; the final matrix is Rot(z, alpha) Rot(y, beta) Rot(x, gamma)." },
+  { title: "Euler singularity", text: "When beta is +/-90 degrees for ZYX angles, alpha and gamma are no longer independently identifiable." },
+  { title: "Roll-pitch-yaw", text: "Roll-pitch-yaw angles use rotations about fixed space-frame axes, commonly interpreted for aircraft or vehicles." },
+  { title: "Same product, different story", text: "ZYX body-frame Euler angles and XYZ fixed-frame roll-pitch-yaw can produce the same matrix product." },
+  { title: "Unit quaternions", text: "Four constrained numbers on the unit sphere represent rotations without local singularities." },
+  { title: "Quaternion double cover", text: "The quaternions q and -q correspond to the same rotation matrix." },
+  { title: "Quaternion composition", text: "Quaternion multiplication represents composition of rotations." },
+  { title: "Cayley-Rodrigues parameters", text: "A three-vector r = tan(theta/2) omega gives local coordinates for SO(3)." },
+  { title: "Cayley limitation", text: "Cayley-Rodrigues parameters fail for 180-degree rotations where tr(R) = -1." },
+  { title: "Choosing a representation", text: "Use angles for human readability, quaternions for smooth computation, and matrices for direct action on vectors." },
+  { title: "Always the same rotation", text: "All valid representations must agree on the underlying matrix R in SO(3)." }
+];
+
+const appendixBQuizItems = [
+  { q: "What happens to ZYX Euler angles at beta = +/-90 degrees?", answers: ["Alpha and gamma are not uniquely determined.", "The rotation matrix stops existing.", "Quaternions become impossible."], correct: 0, note: "Yes. This is the classic Euler-angle singularity." },
+  { q: "How are fixed-frame roll-pitch-yaw rotations different from body-frame Euler rotations?", answers: ["They describe rotations about space-fixed axes instead of moving body axes.", "They use four numbers only.", "They cannot represent yaw."], correct: 0, note: "Correct. The physical interpretation of the ordered rotations changes." },
+  { q: "What constraint do unit quaternions satisfy?", answers: ["q0^2 + q1^2 + q2^2 + q3^2 = 1.", "det(q) = -1.", "beta must equal zero."], correct: 0, note: "Right. Unit quaternions live on the unit 3-sphere." },
+  { q: "Why do q and -q both matter?", answers: ["They represent the same rotation.", "They represent opposite translations.", "Only one has unit length."], correct: 0, note: "Exactly. Unit quaternions double-cover SO(3)." },
+  { q: "When do Cayley-Rodrigues parameters break down?", answers: ["At 180-degree rotations where tr(R) = -1.", "At the identity rotation.", "For every small rotation."], correct: 0, note: "Yes. The tangent half-angle blows up at pi radians." },
+  { q: "Which representation is usually best for directly rotating a vector?", answers: ["A rotation matrix.", "A chapter number.", "A friction cone."], correct: 0, note: "Good. Matrices act directly on vectors, even if another representation is used for storage." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -1271,6 +1295,15 @@ const formulaDetail = document.querySelector("#formulaDetail");
 const formulaDetailLabel = document.querySelector("#formulaDetailLabel");
 const formulaReadout = document.querySelector("#formulaReadout");
 const formulaCanvas = document.querySelector("#formulaCanvas");
+const rotationRep = document.querySelector("#rotationRep");
+const rotAlpha = document.querySelector("#rotAlpha");
+const rotBeta = document.querySelector("#rotBeta");
+const rotGamma = document.querySelector("#rotGamma");
+const rotAlphaLabel = document.querySelector("#rotAlphaLabel");
+const rotBetaLabel = document.querySelector("#rotBetaLabel");
+const rotGammaLabel = document.querySelector("#rotGammaLabel");
+const rotationRepReadout = document.querySelector("#rotationRepReadout");
+const rotationRepCanvas = document.querySelector("#rotationRepCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -3831,6 +3864,123 @@ function drawFormulaExplorer() {
   ctx.fillText("formula families as a robotics dependency map", 28, 34);
 }
 
+function renderAppendixBConcepts() {
+  const el = document.querySelector("#appendixBConcepts");
+  el.innerHTML = appendixBConcepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function matMul3(a, b) {
+  return a.map((row, i) => row.map((_, j) => a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j]));
+}
+
+function rotX3(t) {
+  const c = Math.cos(t);
+  const s = Math.sin(t);
+  return [[1, 0, 0], [0, c, -s], [0, s, c]];
+}
+
+function rotY3(t) {
+  const c = Math.cos(t);
+  const s = Math.sin(t);
+  return [[c, 0, s], [0, 1, 0], [-s, 0, c]];
+}
+
+function rotZ3(t) {
+  const c = Math.cos(t);
+  const s = Math.sin(t);
+  return [[c, -s, 0], [s, c, 0], [0, 0, 1]];
+}
+
+function rotationState() {
+  const a = degToRad(Number(rotAlpha.value));
+  const b = degToRad(Number(rotBeta.value));
+  const g = degToRad(Number(rotGamma.value));
+  const R = matMul3(matMul3(rotZ3(a), rotY3(b)), rotX3(g));
+  const trace = R[0][0] + R[1][1] + R[2][2];
+  const qw = Math.max(0, Math.sqrt(Math.max(0, 1 + trace)) / 2);
+  const denom = Math.max(0.0001, 4 * qw);
+  const q = [
+    qw,
+    (R[2][1] - R[1][2]) / denom,
+    (R[0][2] - R[2][0]) / denom,
+    (R[1][0] - R[0][1]) / denom
+  ];
+  const theta = Math.acos(Math.max(-1, Math.min(1, (trace - 1) / 2)));
+  const scale = Math.abs(Math.sin(theta)) < 0.0001 ? 0 : Math.tan(theta / 2) / (2 * Math.sin(theta));
+  const cayley = [
+    (R[2][1] - R[1][2]) * scale,
+    (R[0][2] - R[2][0]) * scale,
+    (R[1][0] - R[0][1]) * scale
+  ];
+  return { a, b, g, R, q, cayley, trace, theta };
+}
+
+function project3d(p, w, h) {
+  const distance = 4.2;
+  const s = 92 / (distance - p.z);
+  return { x: w * 0.58 + p.x * s, y: h * 0.53 - p.y * s };
+}
+
+function transformPoint(R, p) {
+  return {
+    x: R[0][0] * p.x + R[0][1] * p.y + R[0][2] * p.z,
+    y: R[1][0] * p.x + R[1][1] * p.y + R[1][2] * p.z,
+    z: R[2][0] * p.x + R[2][1] * p.y + R[2][2] * p.z
+  };
+}
+
+function drawRotationRepresentationLab() {
+  const state = rotationState();
+  const rep = rotationRep.value;
+  rotAlphaLabel.textContent = `${Number(rotAlpha.value)} deg`;
+  rotBetaLabel.textContent = `${Number(rotBeta.value)} deg`;
+  rotGammaLabel.textContent = `${Number(rotGamma.value)} deg`;
+  const singular = Math.abs(Math.abs(Number(rotBeta.value)) - 90) < 3;
+  const details = {
+    zyx: `ZYX Euler: alpha, beta, gamma = (${Number(rotAlpha.value)}, ${Number(rotBeta.value)}, ${Number(rotGamma.value)}) degrees.`,
+    rpy: "XYZ roll-pitch-yaw gives the same matrix product when interpreted as fixed-frame x, then y, then z rotations.",
+    quat: `unit quaternion q = (${state.q.map(fmt).join(", ")}), with q and -q representing the same rotation.`,
+    cayley: state.trace < -0.95 ? "Cayley-Rodrigues is near its 180-degree singularity." : `Cayley-Rodrigues r = (${state.cayley.map(fmt).join(", ")}).`
+  };
+  rotationRepReadout.innerHTML = `<strong>${rotationRep.options[rotationRep.selectedIndex].text}</strong>
+    ${matrixHtml(state.R.map((row) => row.map(fmt)))}
+    <p>${details[rep]}</p>
+    <p>${singular ? "Beta is close to the ZYX Euler singularity: alpha and gamma start to trade off." : "This orientation is away from the ZYX beta = +/-90 degree singularity."}</p>`;
+  const { ctx, w, h } = setupCanvas(rotationRepCanvas);
+  grid(ctx, w, h);
+  const verts = [
+    { x: -1, y: -1, z: -1 }, { x: 1, y: -1, z: -1 }, { x: 1, y: 1, z: -1 }, { x: -1, y: 1, z: -1 },
+    { x: -1, y: -1, z: 1 }, { x: 1, y: -1, z: 1 }, { x: 1, y: 1, z: 1 }, { x: -1, y: 1, z: 1 }
+  ].map((p) => project3d(transformPoint(state.R, p), w, h));
+  const edges = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 3;
+  edges.forEach(([i, j]) => {
+    ctx.beginPath();
+    ctx.moveTo(verts[i].x, verts[i].y);
+    ctx.lineTo(verts[j].x, verts[j].y);
+    ctx.stroke();
+  });
+  const origin = project3d(transformPoint(state.R, { x: 0, y: 0, z: 0 }), w, h);
+  [
+    [{ x: 1.6, y: 0, z: 0 }, "#b84a3a", "x"],
+    [{ x: 0, y: 1.6, z: 0 }, "#2a8c6d", "y"],
+    [{ x: 0, y: 0, z: 1.6 }, "#d39b25", "z"]
+  ].forEach(([axis, color, label]) => {
+    const p = project3d(transformPoint(state.R, axis), w, h);
+    drawArrow(ctx, origin, p, color, 4);
+    ctx.fillStyle = color;
+    ctx.fillText(label, p.x + 6, p.y);
+  });
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("rotated body frame and cube; all representations describe this same R", 28, 34);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -3899,6 +4049,9 @@ function redrawActiveChapter() {
   }
   if (active === "A") {
     drawFormulaExplorer();
+  }
+  if (active === "B") {
+    drawRotationRepresentationLab();
   }
 }
 
@@ -4028,6 +4181,12 @@ const navLinksByChapter = {
     ["Explorer", "#appendixA-explorer"],
     ["Patterns", "#appendixA-patterns"],
     ["Check", "#appendixA-check"]
+  ],
+  "B": [
+    ["Map", "#appendixB-spine"],
+    ["Lab", "#appendixB-lab"],
+    ["Tradeoffs", "#appendixB-tradeoffs"],
+    ["Check", "#appendixB-check"]
   ]
 };
 
@@ -4186,6 +4345,10 @@ contactTwistMode.addEventListener("change", applyContactTwistPreset);
   input.addEventListener("input", drawFormulaExplorer);
   input.addEventListener("change", drawFormulaExplorer);
 });
+[rotationRep, rotAlpha, rotBeta, rotGamma].forEach((input) => {
+  input.addEventListener("input", drawRotationRepresentationLab);
+  input.addEventListener("change", drawRotationRepresentationLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -4221,5 +4384,7 @@ renderChapter13Concepts();
 renderGenericQuiz("#chapter13Quiz", chapter13QuizItems, "Not quite. Chapter 13 separates omnidirectional velocity control, nonholonomic reachable motion, odometry, and base-plus-arm coordination.");
 renderAppendixAConcepts();
 renderGenericQuiz("#appendixAQuiz", appendixAQuizItems, "Not quite. Appendix A is a formula map: identify the object being mapped, then the direction of the map.");
+renderAppendixBConcepts();
+renderGenericQuiz("#appendixBQuiz", appendixBQuizItems, "Not quite. Appendix B compares orientation representations; ask whether the issue is interpretation, singularity, double cover, or direct matrix action.");
 setChapter("1");
 drawArm();
