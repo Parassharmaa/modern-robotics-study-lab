@@ -807,6 +807,25 @@ const chapter7QuizItems = [
   }
 ];
 
+const chapter8Concepts = [
+  { title: "Lagrangian formulation", text: "Derives equations of motion from kinetic and potential energy using generalized coordinates." },
+  { title: "Mass matrix", text: "M(theta) maps joint accelerations to inertial torques and depends on configuration." },
+  { title: "Velocity terms", text: "Coriolis and centripetal effects appear when moving joints change the kinetic-energy coupling." },
+  { title: "Gravity terms", text: "Gravity torques come from the gradient of potential energy." },
+  { title: "Single rigid body dynamics", text: "Chapter 8 relates classical rigid-body dynamics to twist-wrench notation." },
+  { title: "Newton-Euler recursion", text: "An efficient outward/inward algorithm for inverse dynamics of open chains." },
+  { title: "Forward dynamics", text: "Solves for acceleration from applied torque by inverting the dynamic equations." },
+  { title: "Actuation and friction", text: "Motors, gear ratios, apparent rotor inertia, friction, and flexibility shape real joint effort." }
+];
+
+const chapter8QuizItems = [
+  { q: "What does inverse dynamics compute?", answers: ["Joint torques from desired motion.", "Joint angles from desired pose.", "Only link colors."], correct: 0, note: "Yes. Inverse dynamics maps motion and loads to required effort." },
+  { q: "What does the mass matrix multiply?", answers: ["Joint accelerations.", "Only endpoint position.", "URDF XML tags."], correct: 0, note: "Right. M(theta) thetaddot is the inertial acceleration term." },
+  { q: "Why does M(theta) change with configuration?", answers: ["The links' effective inertia about joints changes as the robot bends.", "Mass disappears at some angles.", "Gravity changes the link lengths."], correct: 0, note: "Exactly. Configuration changes how mass is distributed relative to joint motion." },
+  { q: "What is the Newton-Euler algorithm good for?", answers: ["Efficient recursive inverse dynamics.", "Replacing all kinematics.", "Counting workspace topology."], correct: 0, note: "Good. It computes link motion outward and forces inward." },
+  { q: "Why can gearing add apparent inertia?", answers: ["Rotor inertia is reflected through the gear ratio squared.", "Gears remove all friction.", "The motor mass becomes zero."], correct: 0, note: "Yes. High ratios can make small rotor inertia matter a lot at the joint." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -924,6 +943,28 @@ const closedVyLabel = document.querySelector("#closedVyLabel");
 const closedOmegaLabel = document.querySelector("#closedOmegaLabel");
 const closedVelocityReadout = document.querySelector("#closedVelocityReadout");
 const closedVelocityCanvas = document.querySelector("#closedVelocityCanvas");
+const dynTheta1 = document.querySelector("#dynTheta1");
+const dynTheta2 = document.querySelector("#dynTheta2");
+const dynRate1 = document.querySelector("#dynRate1");
+const dynRate2 = document.querySelector("#dynRate2");
+const dynAccel1 = document.querySelector("#dynAccel1");
+const dynAccel2 = document.querySelector("#dynAccel2");
+const dynTheta1Label = document.querySelector("#dynTheta1Label");
+const dynTheta2Label = document.querySelector("#dynTheta2Label");
+const dynRate1Label = document.querySelector("#dynRate1Label");
+const dynRate2Label = document.querySelector("#dynRate2Label");
+const dynAccel1Label = document.querySelector("#dynAccel1Label");
+const dynAccel2Label = document.querySelector("#dynAccel2Label");
+const dynamicsReadout = document.querySelector("#dynamicsReadout");
+const dynamicsCanvas = document.querySelector("#dynamicsCanvas");
+const gearRatio = document.querySelector("#gearRatio");
+const rotorInertia = document.querySelector("#rotorInertia");
+const viscousFriction = document.querySelector("#viscousFriction");
+const gearRatioLabel = document.querySelector("#gearRatioLabel");
+const rotorInertiaLabel = document.querySelector("#rotorInertiaLabel");
+const viscousFrictionLabel = document.querySelector("#viscousFrictionLabel");
+const actuationReadout = document.querySelector("#actuationReadout");
+const actuationCanvas = document.querySelector("#actuationCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -2354,6 +2395,126 @@ function drawClosedVelocityLab() {
   ctx.fillText("platform velocity and projected leg rates", 28, 34);
 }
 
+function renderChapter8Concepts() {
+  const el = document.querySelector("#chapter8Concepts");
+  el.innerHTML = chapter8Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function getDynamicsState() {
+  const q1 = degToRad(Number(dynTheta1.value));
+  const q2 = degToRad(Number(dynTheta2.value));
+  const qd1 = Number(dynRate1.value) / 100;
+  const qd2 = Number(dynRate2.value) / 100;
+  const qdd1 = Number(dynAccel1.value) / 100;
+  const qdd2 = Number(dynAccel2.value) / 100;
+  const l1 = 1.2;
+  const l2 = 0.95;
+  const m1 = 2.0;
+  const m2 = 1.4;
+  const lc1 = l1 / 2;
+  const lc2 = l2 / 2;
+  const I1 = 0.18;
+  const I2 = 0.10;
+  const g = 9.81;
+  const c2 = Math.cos(q2);
+  const s2 = Math.sin(q2);
+  const M = [
+    [I1 + I2 + m1 * lc1 * lc1 + m2 * (l1 * l1 + lc2 * lc2 + 2 * l1 * lc2 * c2), I2 + m2 * (lc2 * lc2 + l1 * lc2 * c2)],
+    [I2 + m2 * (lc2 * lc2 + l1 * lc2 * c2), I2 + m2 * lc2 * lc2]
+  ];
+  const h = -m2 * l1 * lc2 * s2;
+  const c = [
+    h * (2 * qd1 * qd2 + qd2 * qd2),
+    -h * qd1 * qd1
+  ];
+  const grav = [
+    (m1 * lc1 + m2 * l1) * g * Math.cos(q1) + m2 * lc2 * g * Math.cos(q1 + q2),
+    m2 * lc2 * g * Math.cos(q1 + q2)
+  ];
+  const friction = [0.12 * qd1 + 0.18 * Math.sign(qd1), 0.08 * qd2 + 0.12 * Math.sign(qd2)];
+  const inertial = [M[0][0] * qdd1 + M[0][1] * qdd2, M[1][0] * qdd1 + M[1][1] * qdd2];
+  const tau = [inertial[0] + c[0] + grav[0] + friction[0], inertial[1] + c[1] + grav[1] + friction[1]];
+  return { q1, q2, qd1, qd2, qdd1, qdd2, l1, l2, M, c, grav, friction, inertial, tau };
+}
+
+function drawDynamicsLab() {
+  const s = getDynamicsState();
+  dynTheta1Label.textContent = `${Number(dynTheta1.value)} deg`;
+  dynTheta2Label.textContent = `${Number(dynTheta2.value)} deg`;
+  dynRate1Label.textContent = fmt(s.qd1);
+  dynRate2Label.textContent = fmt(s.qd2);
+  dynAccel1Label.textContent = fmt(s.qdd1);
+  dynAccel2Label.textContent = fmt(s.qdd2);
+  dynamicsReadout.innerHTML = `<strong>tau = M qddot + c + g + friction</strong>
+    ${matrixHtml(s.M.map((row) => row.map(fmt)))}
+    <p>inertial = (${s.inertial.map(fmt).join(", ")}), velocity = (${s.c.map(fmt).join(", ")}), gravity = (${s.grav.map(fmt).join(", ")}), friction = (${s.friction.map(fmt).join(", ")}).</p>
+    <p>required tau = (${s.tau.map(fmt).join(", ")}).</p>`;
+  const { ctx, w, h } = setupCanvas(dynamicsCanvas);
+  grid(ctx, w, h);
+  const base = { x: w / 2 - 80, y: h / 2 + 78 };
+  const scale = 92;
+  const p1 = { x: base.x + s.l1 * scale * Math.cos(s.q1), y: base.y - s.l1 * scale * Math.sin(s.q1) };
+  const p2 = { x: p1.x + s.l2 * scale * Math.cos(s.q1 + s.q2), y: p1.y - s.l2 * scale * Math.sin(s.q1 + s.q2) };
+  ctx.lineCap = "round";
+  ctx.lineWidth = 13;
+  ctx.strokeStyle = "#2364aa";
+  ctx.beginPath();
+  ctx.moveTo(base.x, base.y);
+  ctx.lineTo(p1.x, p1.y);
+  ctx.stroke();
+  ctx.strokeStyle = "#2a8c6d";
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
+  [base, p1, p2].forEach((p, i) => {
+    ctx.fillStyle = i === 2 ? "#b84a3a" : "#fff";
+    ctx.strokeStyle = "#16202a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, i === 2 ? 8 : 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText(`tau1 ${fmt(s.tau[0])}`, base.x - 26, base.y + 38);
+  ctx.fillText(`tau2 ${fmt(s.tau[1])}`, p1.x + 12, p1.y - 14);
+}
+
+function drawActuationLab() {
+  const N = Number(gearRatio.value);
+  const Jr = Number(rotorInertia.value) / 1000;
+  const b = Number(viscousFriction.value) / 100;
+  const apparent = Jr * N * N;
+  gearRatioLabel.textContent = String(N);
+  rotorInertiaLabel.textContent = fmt(Jr);
+  viscousFrictionLabel.textContent = fmt(b);
+  actuationReadout.innerHTML = `<strong>Reflected actuator effects</strong>
+    <p>apparent rotor inertia at joint = Jr N^2 = ${fmt(apparent)}.</p>
+    <p>viscous friction torque example at qdot = 1 rad/s is ${fmt(b)}.</p>
+    <p>High gear ratios multiply torque but also reflect rotor inertia strongly.</p>`;
+  const { ctx, w, h } = setupCanvas(actuationCanvas);
+  grid(ctx, w, h);
+  const maxH = h - 80;
+  const bars = [
+    ["Jr", Math.min(maxH, Jr * 4000), "#2364aa"],
+    ["Jr N^2", Math.min(maxH, apparent * 8), "#b84a3a"],
+    ["viscous", Math.min(maxH, b * 250), "#2a8c6d"]
+  ];
+  bars.forEach((bar, i) => {
+    const x = 90 + i * 130;
+    ctx.fillStyle = bar[2];
+    ctx.fillRect(x, h - 42 - bar[1], 72, bar[1]);
+    ctx.fillStyle = "#16202a";
+    ctx.fillText(bar[0], x + 8, h - 18);
+  });
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -2390,6 +2551,10 @@ function redrawActiveChapter() {
   if (active === "7") {
     drawClosedChainLab();
     drawClosedVelocityLab();
+  }
+  if (active === "8") {
+    drawDynamicsLab();
+    drawActuationLab();
   }
 }
 
@@ -2452,6 +2617,15 @@ const navLinksByChapter = {
     ["Stewart", "#chapter7-stewart"],
     ["Singularities", "#chapter7-singularities"],
     ["Check", "#chapter7-check"]
+  ],
+  "8": [
+    ["Spine", "#chapter8-spine"],
+    ["Mass", "#chapter8-mass"],
+    ["Forward", "#chapter8-forward"],
+    ["Newton", "#chapter8-newton"],
+    ["Actuation", "#chapter8-actuation"],
+    ["More", "#chapter8-extra"],
+    ["Check", "#chapter8-check"]
   ]
 };
 
@@ -2561,6 +2735,12 @@ ikBranch.addEventListener("change", drawAnalyticIkLab);
 [closedVx, closedVy, closedOmega].forEach((input) => {
   input.addEventListener("input", drawClosedVelocityLab);
 });
+[dynTheta1, dynTheta2, dynRate1, dynRate2, dynAccel1, dynAccel2].forEach((input) => {
+  input.addEventListener("input", drawDynamicsLab);
+});
+[gearRatio, rotorInertia, viscousFriction].forEach((input) => {
+  input.addEventListener("input", drawActuationLab);
+});
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -2582,5 +2762,7 @@ renderChapter6Concepts();
 renderGenericQuiz("#chapter6Quiz", chapter6QuizItems, "Not quite. Chapter 6 is about reversing forward kinematics with analytic branches or Jacobian-based numerical steps.");
 renderChapter7Concepts();
 renderGenericQuiz("#chapter7Quiz", chapter7QuizItems, "Not quite. Chapter 7 is about loop constraints, parallel mechanisms, and the velocity constraints created by closed chains.");
+renderChapter8Concepts();
+renderGenericQuiz("#chapter8Quiz", chapter8QuizItems, "Not quite. Chapter 8 is about effort, inertia, gravity, velocity coupling, and actuator realities.");
 setChapter("1");
 drawArm();

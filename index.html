@@ -21,6 +21,7 @@
         <button class="chapter-switch" data-target-chapter="5">Chapter 5</button>
         <button class="chapter-switch" data-target-chapter="6">Chapter 6</button>
         <button class="chapter-switch" data-target-chapter="7">Chapter 7</button>
+        <button class="chapter-switch" data-target-chapter="8">Chapter 8</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1092,6 +1093,157 @@
           <p>These checks keep closed-chain kinematics distinct from the open-chain story.</p>
         </div>
         <div class="quiz" id="chapter7Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="8">
+      <section class="chapter-hero chapter8-hero" id="chapter8" aria-labelledby="chapter8-title">
+        <div>
+          <p class="kicker">Chapter 8</p>
+          <h2 id="chapter8-title">Dynamics of Open Chains</h2>
+          <p>
+            Dynamics asks how torques, forces, inertia, gravity, velocity coupling,
+            motors, gears, and friction produce robot motion. Chapter 8 gives both
+            energy-based and Newton-Euler views of the same open-chain physics.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Closed-form dynamics</p>
+          <strong>tau = M(theta) thetaddot + c + g</strong>
+          <p>
+            The mass matrix changes with configuration. Velocity terms, gravity, motor
+            effects, and friction add the real effort needed at the joints.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter8-spine" aria-labelledby="chapter8-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter8-spine-title">What Chapter 8 covers</h2>
+          <p>
+            The chapter moves from basic energy ideas to recursive inverse dynamics and
+            practical actuator details. The interactives below keep the core terms visible.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter8Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter8-mass" aria-labelledby="mass-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 8.1 and 8.4</p>
+          <h2 id="mass-title">Mass matrix and inverse dynamics lab</h2>
+          <p>
+            Move the two-link arm and choose desired accelerations. The simplified model
+            shows how configuration-dependent inertia, velocity coupling, gravity, and
+            friction contribute to joint torque.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>theta1 <span id="dynTheta1Label">35 deg</span><input id="dynTheta1" type="range" min="-120" max="150" value="35"></label>
+            <label>theta2 <span id="dynTheta2Label">-45 deg</span><input id="dynTheta2" type="range" min="-150" max="150" value="-45"></label>
+            <label>theta1 dot <span id="dynRate1Label">0.60</span><input id="dynRate1" type="range" min="-150" max="150" value="60"></label>
+            <label>theta2 dot <span id="dynRate2Label">-0.30</span><input id="dynRate2" type="range" min="-150" max="150" value="-30"></label>
+            <label>theta1 ddot <span id="dynAccel1Label">0.70</span><input id="dynAccel1" type="range" min="-200" max="200" value="70"></label>
+            <label>theta2 ddot <span id="dynAccel2Label">0.30</span><input id="dynAccel2" type="range" min="-200" max="200" value="30"></label>
+            <div class="matrix-readout" id="dynamicsReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="dynamicsCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter8-forward" aria-labelledby="forward-dyn-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 8.5</p>
+          <h2 id="forward-dyn-title">Forward dynamics reverses inverse dynamics</h2>
+          <p>
+            Inverse dynamics asks for torque from desired acceleration. Forward dynamics
+            asks what acceleration results from applied torque.
+          </p>
+        </div>
+        <div class="comparison-grid">
+          <article class="concept-card">
+            <h3>Inverse dynamics</h3>
+            <p>Given theta, thetadot, thetaddot, compute tau.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Forward dynamics</h3>
+            <p>Given theta, thetadot, tau, solve M(theta) thetaddot = tau - c - g.</p>
+          </article>
+          <article class="concept-card">
+            <h3>Simulation loop</h3>
+            <p>Compute acceleration, integrate velocity, then integrate configuration.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter8-newton" aria-labelledby="newton-title">
+        <div>
+          <p class="eyebrow">Section 8.3</p>
+          <h2 id="newton-title">Newton-Euler inverse dynamics is recursive bookkeeping</h2>
+          <p>
+            The algorithm propagates velocities and accelerations outward from the base,
+            then propagates forces and torques inward from the end-effector. It is the
+            efficient workhorse for open-chain inverse dynamics.
+          </p>
+        </div>
+        <div class="pipeline">
+          <article class="pipe-step"><b>1</b><div><h3>Outward pass</h3><p>Compute link twists and accelerations from base to tip.</p></div></article>
+          <article class="pipe-step"><b>2</b><div><h3>Link wrench</h3><p>Use spatial inertia to get each link's required wrench.</p></div></article>
+          <article class="pipe-step"><b>3</b><div><h3>Inward pass</h3><p>Accumulate transmitted forces from tip back to base.</p></div></article>
+          <article class="pipe-step"><b>4</b><div><h3>Joint torque</h3><p>Project each wrench onto the joint screw axis.</p></div></article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter8-actuation" aria-labelledby="actuation-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 8.9</p>
+          <h2 id="actuation-title">Motors, gearing, apparent inertia, and friction</h2>
+          <p>
+            Real robots do not apply ideal torques directly. Motors, gear ratios, rotor
+            inertias, Coulomb friction, viscous friction, and flexibility affect the effort
+            that appears at the joint.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>gear ratio <span id="gearRatioLabel">60</span><input id="gearRatio" type="range" min="1" max="120" value="60"></label>
+            <label>rotor inertia <span id="rotorInertiaLabel">0.004</span><input id="rotorInertia" type="range" min="0" max="20" value="4"></label>
+            <label>viscous friction <span id="viscousFrictionLabel">0.08</span><input id="viscousFriction" type="range" min="0" max="40" value="8"></label>
+            <div class="matrix-readout" id="actuationReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="actuationCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter8-extra" aria-labelledby="extra-dyn-title">
+        <div class="section-head">
+          <p class="eyebrow">Other Chapter 8 pieces</p>
+          <h2 id="extra-dyn-title">Task-space, constrained, and URDF dynamics</h2>
+          <p>
+            Once joint-space dynamics are available, the book extends them to task-space
+            apparent inertia, constrained motion, and robot-description files.
+          </p>
+        </div>
+        <div class="task-cards">
+          <article class="task-card"><h3>Task-space dynamics</h3><p>Transforms joint-space inertia through the Jacobian to reason about endpoint acceleration and force.</p></article>
+          <article class="task-card"><h3>Constrained dynamics</h3><p>Adds constraint forces when contacts or closed-chain constraints restrict motion.</p></article>
+          <article class="task-card"><h3>Dynamics in URDF</h3><p>URDF can include inertial frames, masses, inertia matrices, joint limits, and transmissions.</p></article>
+        </div>
+      </section>
+
+      <section class="band" id="chapter8-check" aria-labelledby="chapter8-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter8-quiz-title">Chapter 8 checkpoint</h2>
+          <p>These checks keep the dynamics terms and algorithms distinct.</p>
+        </div>
+        <div class="quiz" id="chapter8Quiz"></div>
       </section>
       </div>
     </main>
