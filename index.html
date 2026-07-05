@@ -22,6 +22,7 @@
         <button class="chapter-switch" data-target-chapter="6">Chapter 6</button>
         <button class="chapter-switch" data-target-chapter="7">Chapter 7</button>
         <button class="chapter-switch" data-target-chapter="8">Chapter 8</button>
+        <button class="chapter-switch" data-target-chapter="9">Chapter 9</button>
       </div>
       <nav aria-label="Study navigation">
         <a href="#map">Roadmap</a>
@@ -1244,6 +1245,112 @@
           <p>These checks keep the dynamics terms and algorithms distinct.</p>
         </div>
         <div class="quiz" id="chapter8Quiz"></div>
+      </section>
+      </div>
+
+      <div class="chapter-view" data-chapter-view="9">
+      <section class="chapter-hero chapter9-hero" id="chapter9" aria-labelledby="chapter9-title">
+        <div>
+          <p class="kicker">Chapter 9</p>
+          <h2 id="chapter9-title">Trajectory Generation</h2>
+          <p>
+            Trajectory generation turns a geometric path into a time-indexed motion.
+            Chapter 9 explains straight-line paths, time scalings, polynomial via-point
+            trajectories, and the phase-plane idea behind time-optimal timing.
+          </p>
+        </div>
+        <div class="formula-panel">
+          <p class="eyebrow">Path plus timing</p>
+          <strong>theta(t) = theta_start + s(t)(theta_end - theta_start)</strong>
+          <p>
+            The path says where to go. The time scaling s(t) says how quickly to move
+            along it while respecting velocity and acceleration constraints.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="chapter9-spine" aria-labelledby="chapter9-spine-title">
+        <div class="section-head">
+          <p class="eyebrow">Detailed map</p>
+          <h2 id="chapter9-spine-title">What Chapter 9 covers</h2>
+          <p>
+            The chapter separates geometry from timing. That simple separation lets
+            robots create smooth motion from sparse waypoints.
+          </p>
+        </div>
+        <div class="concept-grid" id="chapter9Concepts"></div>
+      </section>
+
+      <section class="band" id="chapter9-scaling" aria-labelledby="scaling-title">
+        <div class="section-head">
+          <p class="eyebrow">Sections 9.2.1 and 9.2.2</p>
+          <h2 id="scaling-title">Straight-line path with cubic or quintic timing</h2>
+          <p>
+            Choose a duration and time-scaling type. The plot shows position fraction
+            s(t), velocity sdot(t), and acceleration sddot(t).
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>duration T <span id="trajDurationLabel">4.0</span><input id="trajDuration" type="range" min="1" max="10" value="4"></label>
+            <label>time scaling
+              <select id="trajScaling">
+                <option value="cubic">Cubic</option>
+                <option value="quintic">Quintic</option>
+              </select>
+            </label>
+            <label>sample time <span id="trajTimeLabel">2.0</span><input id="trajTime" type="range" min="0" max="100" value="50"></label>
+            <div class="matrix-readout" id="trajReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="trajCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="chapter9-via" aria-labelledby="via-title">
+        <div class="section-head">
+          <p class="eyebrow">Section 9.3</p>
+          <h2 id="via-title">Via points create piecewise polynomial motion</h2>
+          <p>
+            Sparse via points shape a trajectory. The app draws a smooth interpolation
+            through the points and highlights why velocity continuity matters.
+          </p>
+        </div>
+        <div class="motion-lab">
+          <div class="control-panel">
+            <label>middle waypoint <span id="viaHeightLabel">70</span><input id="viaHeight" type="range" min="-80" max="120" value="70"></label>
+            <label>end waypoint <span id="viaEndLabel">35</span><input id="viaEnd" type="range" min="-80" max="120" value="35"></label>
+            <div class="matrix-readout" id="viaReadout"></div>
+          </div>
+          <div class="visual-panel">
+            <canvas id="viaCanvas" width="620" height="360"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="band split" id="chapter9-phase" aria-labelledby="phase-title">
+        <div>
+          <p class="eyebrow">Section 9.4</p>
+          <h2 id="phase-title">Time-optimal timing lives in the s, sdot phase plane</h2>
+          <p>
+            Time-optimal time scaling follows acceleration limits in a phase plane. The
+            useful intuition: push acceleration as hard as allowed, switch at the right
+            curve, then brake as hard as allowed to arrive exactly at rest.
+          </p>
+        </div>
+        <div class="visual-panel">
+          <canvas id="phaseCanvas" width="620" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="band" id="chapter9-check" aria-labelledby="chapter9-quiz-title">
+        <div class="section-head">
+          <p class="eyebrow">Active recall</p>
+          <h2 id="chapter9-quiz-title">Chapter 9 checkpoint</h2>
+          <p>These checks separate path geometry, timing, via points, and time-optimal scaling.</p>
+        </div>
+        <div class="quiz" id="chapter9Quiz"></div>
       </section>
       </div>
     </main>

@@ -826,6 +826,25 @@ const chapter8QuizItems = [
   { q: "Why can gearing add apparent inertia?", answers: ["Rotor inertia is reflected through the gear ratio squared.", "Gears remove all friction.", "The motor mass becomes zero."], correct: 0, note: "Yes. High ratios can make small rotor inertia matter a lot at the joint." }
 ];
 
+const chapter9Concepts = [
+  { title: "Path", text: "A geometric curve with no timing attached." },
+  { title: "Trajectory", text: "A path plus a time scaling, giving position, velocity, and acceleration at each time." },
+  { title: "Straight-line paths", text: "Interpolate linearly in joint space or task space between start and end configurations." },
+  { title: "Time scaling", text: "The scalar s(t) moves from 0 to 1 while satisfying boundary velocity and acceleration conditions." },
+  { title: "Cubic scaling", text: "Cubic timing can start and stop with zero velocity." },
+  { title: "Quintic scaling", text: "Quintic timing can additionally start and stop with zero acceleration." },
+  { title: "Via points", text: "Intermediate points guide motion, usually with piecewise polynomial segments." },
+  { title: "Time optimality", text: "The fastest feasible timing follows velocity and acceleration limits in the phase plane." }
+];
+
+const chapter9QuizItems = [
+  { q: "What is the difference between a path and a trajectory?", answers: ["A trajectory includes timing; a path is only geometry.", "A path includes torque; a trajectory cannot.", "They are always identical."], correct: 0, note: "Yes. Chapter 9 is largely about adding timing to paths." },
+  { q: "What does s(t) represent?", answers: ["Progress along a path from 0 to 1.", "A joint torque.", "A collision obstacle."], correct: 0, note: "Right. s(t) is the scalar time scaling." },
+  { q: "Why use quintic time scaling?", answers: ["It can enforce zero velocity and zero acceleration at endpoints.", "It removes all singularities.", "It is only for mobile robots."], correct: 0, note: "Exactly. Quintic has enough coefficients for more endpoint conditions." },
+  { q: "What are via points?", answers: ["Intermediate configurations the trajectory should pass through.", "Only final endpoint velocities.", "Friction constants."], correct: 0, note: "Good. Via points shape a multi-segment trajectory." },
+  { q: "What does the s, sdot phase plane help with?", answers: ["Time-optimal time scaling under limits.", "URDF parsing.", "Choosing link lengths."], correct: 0, note: "Yes. It is the natural picture for acceleration-limited path timing." }
+];
+
 const angleOne = document.querySelector("#angleOne");
 const angleTwo = document.querySelector("#angleTwo");
 const angleOneLabel = document.querySelector("#angleOneLabel");
@@ -965,6 +984,20 @@ const rotorInertiaLabel = document.querySelector("#rotorInertiaLabel");
 const viscousFrictionLabel = document.querySelector("#viscousFrictionLabel");
 const actuationReadout = document.querySelector("#actuationReadout");
 const actuationCanvas = document.querySelector("#actuationCanvas");
+const trajDuration = document.querySelector("#trajDuration");
+const trajScaling = document.querySelector("#trajScaling");
+const trajTime = document.querySelector("#trajTime");
+const trajDurationLabel = document.querySelector("#trajDurationLabel");
+const trajTimeLabel = document.querySelector("#trajTimeLabel");
+const trajReadout = document.querySelector("#trajReadout");
+const trajCanvas = document.querySelector("#trajCanvas");
+const viaHeight = document.querySelector("#viaHeight");
+const viaEnd = document.querySelector("#viaEnd");
+const viaHeightLabel = document.querySelector("#viaHeightLabel");
+const viaEndLabel = document.querySelector("#viaEndLabel");
+const viaReadout = document.querySelector("#viaReadout");
+const viaCanvas = document.querySelector("#viaCanvas");
+const phaseCanvas = document.querySelector("#phaseCanvas");
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -2515,6 +2548,152 @@ function drawActuationLab() {
   });
 }
 
+function renderChapter9Concepts() {
+  const el = document.querySelector("#chapter9Concepts");
+  el.innerHTML = chapter9Concepts.map((item, index) => `
+    <article class="concept-card">
+      <h3>${index + 1}. ${item.title}</h3>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+}
+
+function timeScalingValues(u, T, mode) {
+  if (mode === "quintic") {
+    return {
+      s: 10 * u ** 3 - 15 * u ** 4 + 6 * u ** 5,
+      sd: (30 * u ** 2 - 60 * u ** 3 + 30 * u ** 4) / T,
+      sdd: (60 * u - 180 * u ** 2 + 120 * u ** 3) / (T * T)
+    };
+  }
+  return {
+    s: 3 * u * u - 2 * u * u * u,
+    sd: (6 * u - 6 * u * u) / T,
+    sdd: (6 - 12 * u) / (T * T)
+  };
+}
+
+function drawTrajectoryLab() {
+  const T = Number(trajDuration.value);
+  const mode = trajScaling.value;
+  const u = Number(trajTime.value) / 100;
+  const vals = timeScalingValues(u, T, mode);
+  trajDurationLabel.textContent = fmt(T);
+  trajTimeLabel.textContent = fmt(u * T);
+  trajReadout.innerHTML = `<strong>${mode} time scaling</strong>
+    <p>at t = ${fmt(u * T)}: s = ${fmt(vals.s)}, sdot = ${fmt(vals.sd)}, sddot = ${fmt(vals.sdd)}.</p>
+    <p>${mode === "quintic" ? "Quintic starts and stops with zero velocity and acceleration." : "Cubic starts and stops with zero velocity, but endpoint acceleration is nonzero."}</p>`;
+  const { ctx, w, h } = setupCanvas(trajCanvas);
+  grid(ctx, w, h);
+  const left = 44;
+  const right = w - 24;
+  const mid = h / 2;
+  function plot(fn, color, scale, y0) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i <= 120; i += 1) {
+      const uu = i / 120;
+      const v = fn(timeScalingValues(uu, T, mode));
+      const x = left + uu * (right - left);
+      const y = y0 - v * scale;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  plot((v) => v.s, "#2364aa", h * 0.32, h - 46);
+  plot((v) => v.sd, "#2a8c6d", h * 0.8, mid + 20);
+  plot((v) => v.sdd, "#b84a3a", h * 1.8, mid + 54);
+  const x = left + u * (right - left);
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, 24);
+  ctx.lineTo(x, h - 28);
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("blue s(t), green sdot(t), red sddot(t)", left, 28);
+}
+
+function drawViaLab() {
+  const mid = Number(viaHeight.value);
+  const end = Number(viaEnd.value);
+  viaHeightLabel.textContent = String(mid);
+  viaEndLabel.textContent = String(end);
+  viaReadout.innerHTML = `<strong>Piecewise via-point path</strong>
+    <p>waypoints: (0, 0), (0.5, ${mid}), (1, ${end}).</p>
+    <p>A real planner chooses segment durations and boundary velocities to avoid jerks at joins.</p>`;
+  const { ctx, w, h } = setupCanvas(viaCanvas);
+  grid(ctx, w, h);
+  const pts = [
+    { x: 50, y: h / 2 },
+    { x: w / 2, y: h / 2 - mid },
+    { x: w - 58, y: h / 2 - end }
+  ];
+  ctx.strokeStyle = "#2364aa";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.bezierCurveTo(w * 0.25, pts[0].y, w * 0.26, pts[1].y, pts[1].x, pts[1].y);
+  ctx.bezierCurveTo(w * 0.74, pts[1].y, w * 0.75, pts[2].y, pts[2].x, pts[2].y);
+  ctx.stroke();
+  pts.forEach((p, i) => {
+    ctx.fillStyle = i === 1 ? "#d39b25" : "#b84a3a";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("via point", pts[1].x + 12, pts[1].y - 10);
+}
+
+function drawPhasePlane() {
+  const { ctx, w, h } = setupCanvas(phaseCanvas);
+  grid(ctx, w, h);
+  const left = 56;
+  const bottom = h - 42;
+  const top = 34;
+  const right = w - 34;
+  ctx.strokeStyle = "#16202a";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, bottom);
+  ctx.lineTo(right, bottom);
+  ctx.moveTo(left, bottom);
+  ctx.lineTo(left, top);
+  ctx.stroke();
+  function map(s, sd) {
+    return { x: left + s * (right - left), y: bottom - sd * (bottom - top) };
+  }
+  ctx.strokeStyle = "#d39b25";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i += 1) {
+    const s = i / 100;
+    const lim = Math.min(0.92, 0.22 + 0.72 * Math.sin(Math.PI * s));
+    const p = map(s, lim);
+    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = "#2364aa";
+  ctx.beginPath();
+  for (let i = 0; i <= 48; i += 1) {
+    const s = i / 100;
+    const p = map(s, Math.sqrt(s) * 0.72);
+    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  }
+  for (let i = 48; i <= 100; i += 1) {
+    const s = i / 100;
+    const p = map(s, Math.sqrt(1 - s) * 0.74);
+    ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = "#5a6875";
+  ctx.fillText("s", right - 10, bottom + 22);
+  ctx.fillText("sdot", left - 34, top + 6);
+  ctx.fillText("yellow: velocity limit, blue: accelerate then brake", left + 20, top + 18);
+}
+
 function redrawActiveChapter() {
   const active = document.querySelector(".chapter-view.active")?.dataset.chapterView;
   if (active === "1") {
@@ -2555,6 +2734,11 @@ function redrawActiveChapter() {
   if (active === "8") {
     drawDynamicsLab();
     drawActuationLab();
+  }
+  if (active === "9") {
+    drawTrajectoryLab();
+    drawViaLab();
+    drawPhasePlane();
   }
 }
 
@@ -2626,6 +2810,13 @@ const navLinksByChapter = {
     ["Actuation", "#chapter8-actuation"],
     ["More", "#chapter8-extra"],
     ["Check", "#chapter8-check"]
+  ],
+  "9": [
+    ["Spine", "#chapter9-spine"],
+    ["Scaling", "#chapter9-scaling"],
+    ["Via", "#chapter9-via"],
+    ["Phase", "#chapter9-phase"],
+    ["Check", "#chapter9-check"]
   ]
 };
 
@@ -2741,6 +2932,9 @@ ikBranch.addEventListener("change", drawAnalyticIkLab);
 [gearRatio, rotorInertia, viscousFriction].forEach((input) => {
   input.addEventListener("input", drawActuationLab);
 });
+[trajDuration, trajTime].forEach((input) => input.addEventListener("input", drawTrajectoryLab));
+trajScaling.addEventListener("change", drawTrajectoryLab);
+[viaHeight, viaEnd].forEach((input) => input.addEventListener("input", drawViaLab));
 window.addEventListener("resize", redrawActiveChapter);
 
 renderChapters();
@@ -2764,5 +2958,7 @@ renderChapter7Concepts();
 renderGenericQuiz("#chapter7Quiz", chapter7QuizItems, "Not quite. Chapter 7 is about loop constraints, parallel mechanisms, and the velocity constraints created by closed chains.");
 renderChapter8Concepts();
 renderGenericQuiz("#chapter8Quiz", chapter8QuizItems, "Not quite. Chapter 8 is about effort, inertia, gravity, velocity coupling, and actuator realities.");
+renderChapter9Concepts();
+renderGenericQuiz("#chapter9Quiz", chapter9QuizItems, "Not quite. Chapter 9 separates path geometry from timing; compare the option to that split.");
 setChapter("1");
 drawArm();
